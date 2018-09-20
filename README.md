@@ -9,20 +9,40 @@ aliyun-mns是对阿里云消息服务的封装，具有以下特点：
 * 发送消息重试
 * 监控报警
 
-# Usage
+# 消费者
 
 ```go
-aliyun_mns.QuickDebug()
-c := aliyun_mns.New(
-    endpoint,
-    accessKeyId,
-    accessKeySecret)
-c.AddQueue(&aliyun_mns.Queue{
-    Name:     "xxx",
-    Parallel: 2,
-    QueueAttributeSetters: []aliyun_mns.QueueAttributeSetter{
-        aliyun_mns.WithDelaySeconds(10)},
-    OnReceive: HandleXXX,
-})
-c.Run()
+package main
+
+import (
+	"log"
+
+	"github.com/xiaojiaoyu100/aliyun-mns"
+)
+
+func HandleExample(rm *aliyun_mns.ReceiveMessage, errChan chan error) {
+	log.Println(rm.MessageBody)
+	errChan <- nil
+}
+
+func main() {
+	aliyun_mns.QuickDebug()
+	c := aliyun_mns.New(
+		endpoint,
+		accessKeyId,
+		accessKeySecret)
+	c.AddQueue(&aliyun_mns.Queue{
+		Name:     "example",
+		Parallel: 2,
+		QueueAttributeSetters: []aliyun_mns.QueueAttributeSetter{
+			aliyun_mns.WithDelaySeconds(10)},
+		OnReceive: HandleExample,
+	})
+	c.Run()
+}
+```
+
+# 生产者
+```go
+c.SendMessage("example", "test_data")
 ```
