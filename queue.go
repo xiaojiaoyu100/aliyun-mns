@@ -17,6 +17,8 @@ func (q *Queue) Stop() {
 	if q.isRunning {
 		q.isRunning = false
 		q.longPollQuit <- struct{}{}
-		q.consumeQuit <- struct{}{}
+		for i := 1; i <= q.Parallel; i++ {
+			q.consumeQuit <- struct{}{}
+		}
 	}
 }

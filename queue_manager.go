@@ -33,7 +33,7 @@ func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 	go func() {
 		err := c.BatchListQueue()
 		if err != nil {
-			notifyAsync(err)
+			notifyAsync("BatchListQueue err:", err)
 		} else {
 			fetchQueueReady <- struct{}{}
 		}
@@ -43,7 +43,7 @@ func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 			case <-ticker:
 				err := c.BatchListQueue()
 				if err != nil {
-					notifyAsync(err)
+					notifyAsync("BatchListQueue err:", err)
 					continue
 				} else {
 					fetchQueueReady <- struct{}{}
@@ -73,7 +73,7 @@ func (c *Client) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} {
 					case nil:
 						continue
 					case createQueueConflictError, unknownError:
-						notifyAsync(err)
+						notifyAsync("CreateQueue err:", err)
 					}
 				}
 
@@ -140,7 +140,7 @@ func (c *Client) LongPollQueueMessage(queue *Queue) {
 					queue.Stop()
 					fallthrough
 				default:
-					notifyAsync(err)
+					notifyAsync("BatchReceiveMessage err:", err)
 					time.Sleep(100 * time.Millisecond)
 					continue
 				}
@@ -178,7 +178,7 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			case <-ticker.C:
 				resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, defaultVisibilityTimeout)
 				if err != nil {
-					notifyAsync(err)
+					notifyAsync("ChangeVisibilityTimeout err:", err)
 				} else {
 					rwLock.Lock()
 					receiveMsg.ReceiptHandle = resp.ReceiptHandle
@@ -197,13 +197,13 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		{
 			tickerStop <- struct{}{}
 			if err != nil {
-				notifyAsync(err)
+				notifyAsync("OnReceive err:", err)
 			} else {
 				rwLock.RLock()
 				err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
 				rwLock.RUnlock()
 				if err != nil {
-					notifyAsync(err)
+					notifyAsync("DeleteMessage err:", err)
 				}
 			}
 		}
