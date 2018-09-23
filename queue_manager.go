@@ -169,7 +169,7 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				notifyAsync(buf.String())
 			}
 		}()
-		queue.OnReceive(receiveMsg, errChan)
+		errChan <- queue.OnReceive(receiveMsg)
 	}()
 
 	go func() {
