@@ -20,10 +20,9 @@ import (
 	"github.com/xiaojiaoyu100/aliyun-mns"
 )
 
-func HandleExample(rm *aliyun_mns.ReceiveMessage, errChan chan error) {
-	defer close(errChan) // 必须这么做，防止崩溃或者其它情况产生的bug
+func HandleExample(rm *aliyun_mns.ReceiveMessage) error {
 	log.Println(rm.MessageBody)
-	errChan <- nil
+	return nil
 }
 
 func main() {
