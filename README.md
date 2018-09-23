@@ -21,6 +21,7 @@ import (
 )
 
 func HandleExample(rm *aliyun_mns.ReceiveMessage, errChan chan error) {
+	defer close(errChan) // 必须这么做，防止崩溃或者其它情况产生的bug
 	log.Println(rm.MessageBody)
 	errChan <- nil
 }
