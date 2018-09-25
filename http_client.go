@@ -1,7 +1,11 @@
 package aliyun_mns
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
-// 这里不要设置timeout, long poll不需要设置timeout, 其余请求请在
-var httpClient = &http.Client{}
-
+// 这里设置的timeout应该大于长轮询的最大时间30s，暂定为60s。
+var httpClient = &http.Client{
+	Timeout: 60 * time.Second,
+}

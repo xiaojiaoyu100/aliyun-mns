@@ -29,15 +29,12 @@ func (c *Client) SendBase64EncodedJsonMessage(name string, messageBody interface
 	go func() {
 		for {
 			resp, err = c.sendBase64EncodedJsonMessage(name, messageBody, setters...)
-			switch err {
-			case unknownError:
+			switch {
+			case isNetworkError(err):
 				time.Sleep(time.Millisecond * 100)
 				continue
 			default:
-				ended <- struct{}{}
-				return
-			case nil:
-				ended <- struct{}{}
+				close(ended)
 				return
 			}
 		}
@@ -59,15 +56,12 @@ func (c *Client) SendMessage(name string, messageBody string, setters ...Message
 	go func() {
 		for {
 			resp, err = c.sendMessage(name, messageBody, setters...)
-			switch err {
-			case unknownError:
+			switch {
+			case isNetworkError(err):
 				time.Sleep(time.Millisecond * 100)
 				continue
 			default:
-				ended <- struct{}{}
-				return
-			case nil:
-				ended <- struct{}{}
+				close(ended)
 				return
 			}
 		}

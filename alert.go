@@ -4,14 +4,14 @@ type alert interface {
 	NotifyAsync(content ...interface{})
 }
 
-var a alert
+var inst alert
 
 func SetAlert(a alert) {
-	a = a
+	inst = a
 }
 
 func notifyAsync(content ...interface{}) {
-	if a != nil {
-		a.NotifyAsync(content...)
+	if inst != nil {
+		inst.NotifyAsync(content...)
 	}
 }

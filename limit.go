@@ -1,7 +1,7 @@
 package aliyun_mns
 
 const (
-	timeout = 3 // second
+	timeout = 5 // second
 )
 
 const (

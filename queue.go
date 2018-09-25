@@ -16,9 +16,7 @@ type Queue struct {
 func (q *Queue) Stop() {
 	if q.isRunning {
 		q.isRunning = false
-		q.longPollQuit <- struct{}{}
-		for i := 1; i <= q.Parallel; i++ {
-			q.consumeQuit <- struct{}{}
-		}
+		close(q.longPollQuit)
+		close(q.consumeQuit)
 	}
 }

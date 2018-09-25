@@ -1,6 +1,10 @@
 package aliyun_mns
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"io"
+	"net"
+)
 
 type MnsError string
 
@@ -60,4 +64,12 @@ type RespErr struct {
 	Message   string   `xml:"Message"`
 	RequestId string   `xml:"RequestId"`
 	HostId    string   `xml:"HostId"`
+}
+
+func isNetworkError(err error) bool {
+	if err == io.EOF {
+		return true
+	}
+	_, ok := err.(net.Error)
+	return ok
 }

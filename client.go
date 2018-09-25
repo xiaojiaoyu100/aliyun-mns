@@ -78,4 +78,3 @@ func (c *Client) canonicalizedResource(request *http.Request) string {
 	}
 	return request.URL.Path + "?" + request.URL.RawQuery
 }
-

@@ -10,7 +10,7 @@ import (
 )
 
 type BatchPeekMessageResponse struct {
-	XMLName      xml.Name          `xml:"Messages"`
+	XMLName      xml.Name       `xml:"Messages"`
 	XmlNs        string         `xml:"xmlns,attr"`
 	PeekMessages []*PeekMessage `xml:"Message"`
 }
