@@ -195,7 +195,7 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	select {
 	case err := <-errChan:
 		{
-			tickerStop <- struct{}{}
+			close(tickerStop)
 			if err != nil {
 				notifyAsync("OnReceive err:", err)
 			} else {
@@ -209,7 +209,7 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		}
 	case <-time.After(5 * time.Hour):
 		{
-			tickerStop <- struct{}{}
+			close(tickerStop)
 		}
 	}
 }

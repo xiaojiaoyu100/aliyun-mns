@@ -79,6 +79,7 @@ func (c *Client) sendBase64EncodedJsonMessage(name string, body interface{}, set
 	if err != nil {
 		return nil, err
 	}
+	globalLogger.printf("queue: %s, send: %s", name, string(b))
 	b64Body := base64.StdEncoding.EncodeToString(b)
 	return c.sendMessage(name, b64Body, setters...)
 }
