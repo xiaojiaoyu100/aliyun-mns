@@ -30,7 +30,7 @@ func (c *Client) SendBase64EncodedJsonMessage(name string, messageBody interface
 		for {
 			resp, err = c.sendBase64EncodedJsonMessage(name, messageBody, setters...)
 			switch {
-			case isNetworkError(err):
+			case shouldRetry(err):
 				time.Sleep(time.Millisecond * 100)
 				continue
 			default:
@@ -57,7 +57,7 @@ func (c *Client) SendMessage(name string, messageBody string, setters ...Message
 		for {
 			resp, err = c.sendMessage(name, messageBody, setters...)
 			switch {
-			case isNetworkError(err):
+			case shouldRetry(err):
 				time.Sleep(time.Millisecond * 100)
 				continue
 			default:

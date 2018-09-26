@@ -3,7 +3,6 @@ package aliyun_mns
 import (
 	"encoding/xml"
 	"io"
-	"net"
 )
 
 type MnsError string
@@ -66,10 +65,23 @@ type RespErr struct {
 	HostId    string   `xml:"HostId"`
 }
 
-func isNetworkError(err error) bool {
+func shouldRetry(err error) bool {
+	// tcp读
 	if err == io.EOF {
 		return true
 	}
-	_, ok := err.(net.Error)
-	return ok
+	// 关于timeout的说明，timeout并不一定代表请求没成功
+	// 但是在消息队列这种场景下好像也是无害的．
+	switch err := err.(type) {
+	case interface {
+		Temporary() bool
+	}:
+		return err.Temporary()
+	case interface {
+		Timeout() bool
+	}:
+		return err.Timeout()
+	default:
+		return false
+	}
 }
