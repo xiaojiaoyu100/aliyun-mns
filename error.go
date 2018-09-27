@@ -22,10 +22,11 @@ const (
 	messageDelaySecondsOutOfRangeError = MnsError("MessageDelaySecondsOutOfRange")
 )
 
-// alimns error code
+// aliyun mns error code
 const (
 	messageNotExistError = MnsError("MessageNotExist")
 	queueNotExistError   = MnsError("QueueNotExist")
+	internalError        = MnsError("InternalError")
 )
 
 func IsUnknown(err error) bool {

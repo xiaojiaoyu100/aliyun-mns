@@ -2,6 +2,7 @@ package aliyun_mns
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -77,6 +78,6 @@ func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParam
 			return nil, queueNotExistError
 		}
 
-		return nil, unknownError
+		return nil, errors.New(respErr.Code)
 	}
 }
