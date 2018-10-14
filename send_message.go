@@ -13,11 +13,7 @@ import (
 )
 
 type SendMessageResponse struct {
-	XMLName        xml.Name `xml:"Message"`
-	XmlNs          string   `xml:"xmlns,attr"`
-	MessageId      string   `xml:"MessageId"`
-	MessageBodyMD5 string   `xml:"MessageBodyMD5"`
-	ReceiptHandle  string   `xml:"ReceiptHandle"` // 发送延时消息才有返回
+	SendMessage
 }
 
 func (c *Client) SendBase64EncodedJsonMessage(name string, messageBody interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {

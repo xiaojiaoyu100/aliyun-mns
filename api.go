@@ -7,6 +7,7 @@ const (
 	mnsGetQueueAttributes      = "/queues/%s"
 	mnsDeleteQueue             = "/queues/%s"
 	mnsSendMessage             = "/queues/%s/messages"
+	mnsBatchSendMessage        = "/queues/%s/messages"
 	mnsReceiveMessage          = "/queues/%s/messages"
 	mnsBatchReceiveMessage     = "/queues/%s/messages"
 	mnsDeleteMessage           = "/queues/%s/messages?ReceiptHandle=%s"

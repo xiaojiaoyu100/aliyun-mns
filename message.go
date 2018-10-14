@@ -9,7 +9,7 @@ type Message struct {
 	XMLName      xml.Name `xml:"Message"`
 	XmlNs        string   `xml:"xmlns,attr"`
 	MessageBody  string   `xml:"MessageBody,omitempty"` // 消息正文
-	DelaySeconds *int     `xml:"DelaySeconds,omitempty"`
+	DelaySeconds int      `xml:"DelaySeconds,omitempty"`
 	Priority     int      `xml:"Priority,omitempty"`
 }
 
@@ -24,7 +24,7 @@ func WithMessageDelaySeconds(delay int) MessageSetter {
 		if delay < minDelaySeconds || delay > maxDelaySeconds {
 			return messageDelaySecondsOutOfRangeError
 		}
-		msg.DelaySeconds = &delay
+		msg.DelaySeconds = delay
 		return nil
 	}
 }
