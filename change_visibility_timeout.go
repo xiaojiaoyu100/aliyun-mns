@@ -3,6 +3,7 @@ package aliyun_mns
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -59,6 +60,16 @@ func (c *Client) ChangeVisibilityTimeout(name string, receiptHandle string, visi
 		}
 		return &changeVisibilityTimeoutResponse, nil
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		switch respErr.Code {
+		case messageNotExistError.Error():
+			return nil, messageNotExistError
+		case queueNotExistError.Error():
+			return nil, queueNotExistError
+		}
+		return nil, errors.New(respErr.Message)
 	}
 }

@@ -177,13 +177,19 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			select {
 			case <-ticker.C:
 				resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, defaultVisibilityTimeout)
-				if err != nil {
+				switch {
+				case err == nil:
+					{
+						rwLock.Lock()
+						receiveMsg.ReceiptHandle = resp.ReceiptHandle
+						receiveMsg.NextVisibleTime = resp.NextVisibleTime
+						rwLock.Unlock()
+					}
+				case err == messageNotExistError, err == queueNotExistError:
+					ticker.Stop()
+					return
+				default:
 					notifyAsync("ChangeVisibilityTimeout err:", err)
-				} else {
-					rwLock.Lock()
-					receiveMsg.ReceiptHandle = resp.ReceiptHandle
-					receiveMsg.NextVisibleTime = resp.NextVisibleTime
-					rwLock.Unlock()
 				}
 			case <-tickerStop:
 				ticker.Stop()
