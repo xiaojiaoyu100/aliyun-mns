@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -133,6 +134,14 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 		}
 		return &sendMessageResponse, nil
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		switch respErr.Code {
+		case queueNotExistError.Error():
+			return nil, queueNotExistError
+		}
+		return nil, errors.New(respErr.Message)
 	}
 }
