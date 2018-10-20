@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"errors"
 )
 
 type QueueAttributeResponse struct {
@@ -66,7 +67,11 @@ func (c *Client) GetQueueAttributes(name string) (*QueueAttributeResponse, error
 		return &queueAttributeResponse, nil
 
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(respErr.Code)
 	}
 
 }

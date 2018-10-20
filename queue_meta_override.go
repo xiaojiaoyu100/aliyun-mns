@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"errors"
 )
 
 func (c *Client) QueueMetaOverride(name string, setters ...QueueAttributeSetter) error {
@@ -55,6 +56,10 @@ func (c *Client) QueueMetaOverride(name string, setters ...QueueAttributeSetter)
 	case http.StatusNoContent:
 		return nil
 	default:
-		return unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return err
+		}
+		return errors.New(respErr.Code)
 	}
 }

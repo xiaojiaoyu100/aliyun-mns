@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"errors"
 )
 
 type ListQueueRequest struct {
@@ -120,6 +121,10 @@ func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error
 		}
 		return response, nil
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(respErr.Code)
 	}
 }

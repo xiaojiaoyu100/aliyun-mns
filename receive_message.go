@@ -118,6 +118,10 @@ func (c *Client) ReceiveMessage(name string, setters ...ReceiveMessageParamSette
 		}
 		return &receiveMessageResponse, nil
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(respErr.Code)
 	}
 }

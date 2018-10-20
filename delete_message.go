@@ -2,10 +2,12 @@ package aliyun_mns
 
 import (
 	"context"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+	"errors"
 )
 
 func (c *Client) DeleteMessage(name, receiptHandle string) error {
@@ -41,6 +43,10 @@ func (c *Client) DeleteMessage(name, receiptHandle string) error {
 	case http.StatusNoContent:
 		return nil
 	default:
-		return unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return err
+		}
+		return  errors.New(respErr.Code)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"errors"
 )
 
 type PeekMessage struct {
@@ -61,6 +62,10 @@ func (c *Client) PeekMessage(name string) (*PeekMessageResponse, error) {
 		}
 		return &peekMessageResponse, nil
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(respErr.Code)
 	}
 }
