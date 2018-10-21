@@ -3,11 +3,11 @@ package aliyun_mns
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
-	"errors"
 )
 
 func (c *Client) DeleteQueue(name string) error {

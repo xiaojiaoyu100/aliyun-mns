@@ -3,11 +3,11 @@ package aliyun_mns
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
-	"errors"
 )
 
 func (c *Client) DeleteMessage(name, receiptHandle string) error {
@@ -47,6 +47,6 @@ func (c *Client) DeleteMessage(name, receiptHandle string) error {
 		if err := xml.Unmarshal(body, &respErr); err != nil {
 			return err
 		}
-		return  errors.New(respErr.Code)
+		return errors.New(respErr.Code)
 	}
 }

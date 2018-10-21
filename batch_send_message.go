@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -27,6 +28,22 @@ type BatchSendMessageResponse struct {
 }
 
 func (c *Client) BatchSendMessage(name string, messageList ...*Message) (*BatchSendMessageResponse, error) {
+	if len(messageList) > 16 {
+		return nil, batchSendMessageNumLimitError
+	}
+
+	var (
+		try            = 0
+		sendedMessages = make([]*SendMessage, len(messageList))
+		roundIndexList []int
+	)
+
+	originalMessageList := messageList
+
+	for idx, _ := range originalMessageList {
+		roundIndexList = append(roundIndexList, idx)
+	}
+
 start:
 	body, err := xml.Marshal(&messageList)
 	if err != nil {
@@ -51,6 +68,7 @@ start:
 	if err != nil {
 		return nil, err
 	}
+	try++
 	defer resp.Body.Close()
 
 	body, err = ioutil.ReadAll(resp.Body)
@@ -61,36 +79,51 @@ start:
 	globalLogger.printf("批量发送消息回复: %s %s", resp.Status, string(body))
 
 	switch resp.StatusCode {
-	case http.StatusCreated:
-		var batchSendMessageResponse BatchSendMessageResponse
-		if err := xml.Unmarshal(body, &batchSendMessageResponse); err != nil {
-			return nil, err
-		}
-		return &batchSendMessageResponse, nil
-	case http.StatusInternalServerError:
+	case http.StatusCreated,
+		http.StatusInternalServerError:
 		var batchSendMessageResponse BatchSendMessageResponse
 		if err := xml.Unmarshal(body, &batchSendMessageResponse); err != nil {
 			return nil, err
 		}
 		var retryIdx []int
-		for idx, sendMessage := range batchSendMessageResponse.SendMessages {
-			if sendMessage.ErrorCode != internalError.Error() {
-				continue
-			}
-			retryIdx = append(retryIdx, idx)
-		}
-		var retryMessageList []*Message
-		for _, idx := range retryIdx {
-			retryMessageList = append(retryMessageList, messageList[idx])
-		}
+		for seq, sendMessage := range batchSendMessageResponse.SendMessages {
+			idx := roundIndexList[seq]
 
-		if len(retryMessageList) > 0 {
+			switch sendMessage.ErrorCode {
+			case "":
+				sendedMessages[idx] = sendMessage
+			case internalError.Error():
+				retryIdx = append(retryIdx, idx)
+			default:
+				notifyAsync("批量发送消息部分失败: ", batchSendMessageResponse, err)
+			}
+		}
+		if len(retryIdx) == 0 {
+			batchSendMessageResponse.SendMessages = sendedMessages
 			return &batchSendMessageResponse, nil
 		}
 
+		roundIndexList = retryIdx
+
+		var retryMessageList []*Message
+		for _, idx := range retryIdx {
+			retryMessageList = append(retryMessageList, originalMessageList[idx])
+		}
+
 		messageList = retryMessageList
+
+		if try > 4 {
+			return nil, batchSendMessageTryLimitError
+		}
+
+		time.Sleep(100 * time.Millisecond * time.Duration(try))
 		goto start
+
 	default:
-		return nil, unknownError
+		var respErr RespErr
+		if err := xml.Unmarshal(body, &respErr); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(respErr.Message)
 	}
 }

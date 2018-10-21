@@ -130,7 +130,7 @@ func (c *Client) LongPollQueueMessage(queue *Queue) {
 				globalLogger.printf("%s long poll quit", queue.Name)
 				return
 			default:
-				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(defaultReceiveMessage))
+				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(queue.Parallel))
 				switch err {
 				case messageNotExistError:
 					continue

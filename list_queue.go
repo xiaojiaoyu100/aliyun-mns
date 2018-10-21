@@ -3,11 +3,11 @@ package aliyun_mns
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-	"errors"
 )
 
 type ListQueueRequest struct {

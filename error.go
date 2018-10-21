@@ -19,6 +19,8 @@ const (
 	messageBodyLimitError              = MnsError("MessageBodyLimit")
 	sendMessageTimeoutError            = MnsError("SendMessageTimeout")
 	messageDelaySecondsOutOfRangeError = MnsError("MessageDelaySecondsOutOfRange")
+	batchSendMessageTryLimitError      = MnsError("BatchSendMessageTryLimit")
+	batchSendMessageNumLimitError      = MnsError("BatchSendMessageNumLimit")
 )
 
 // aliyun mns error code
