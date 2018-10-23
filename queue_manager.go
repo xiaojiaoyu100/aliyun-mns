@@ -49,6 +49,7 @@ func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 					fetchQueueReady <- struct{}{}
 				}
 			}
+			time.Sleep(3 * time.Second)
 		}
 	}()
 
@@ -141,7 +142,7 @@ func (c *Client) LongPollQueueMessage(queue *Queue) {
 					fallthrough
 				default:
 					notifyAsync("BatchReceiveMessage err:", err)
-					time.Sleep(100 * time.Millisecond)
+					time.Sleep(1 * time.Second)
 					continue
 				}
 
