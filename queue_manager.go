@@ -28,7 +28,7 @@ func (c *Client) AddQueue(q *Queue) {
 
 func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 	fetchQueueReady := make(chan struct{})
-	ticker := time.Tick(time.Minute * 1)
+	ticker := time.Tick(time.Minute * 3)
 
 	go func() {
 		err := c.BatchListQueue()
@@ -49,7 +49,6 @@ func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 					fetchQueueReady <- struct{}{}
 				}
 			}
-			time.Sleep(3 * time.Second)
 		}
 	}()
 
@@ -131,6 +130,7 @@ func (c *Client) LongPollQueueMessage(queue *Queue) {
 				globalLogger.printf("%s long poll quit", queue.Name)
 				return
 			default:
+				time.Sleep(50 * time.Millisecond)
 				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(queue.Parallel))
 				switch err {
 				case messageNotExistError:
@@ -142,7 +142,6 @@ func (c *Client) LongPollQueueMessage(queue *Queue) {
 					fallthrough
 				default:
 					notifyAsync("BatchReceiveMessage err:", err)
-					time.Sleep(1 * time.Second)
 					continue
 				}
 
