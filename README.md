@@ -20,8 +20,9 @@ import (
 	"github.com/xiaojiaoyu100/aliyun-mns"
 )
 
-func HandleExample(rm *aliyun_mns.ReceiveMessage) error {
+func HandleExample(rm *aliyun_mns.ReceiveMessage,queneName string) error {
 	log.Println(rm.MessageBody)
+	log.Println(queneName)
 	return nil
 }
 
@@ -39,6 +40,8 @@ func main() {
 		OnReceive: HandleExample,
 	})
 	c.Run()
+	done := make(chan bool)
+	<-done
 }
 ```
 

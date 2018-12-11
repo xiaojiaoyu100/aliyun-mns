@@ -1,6 +1,6 @@
 package aliyun_mns
 
-type OnReceiveFunc func(message *ReceiveMessage) error
+type OnReceiveFunc func(message *ReceiveMessage, queneName string) error
 
 type Queue struct {
 	Name                  string
