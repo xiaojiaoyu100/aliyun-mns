@@ -60,7 +60,7 @@ func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParam
 	}
 
 	globalLogger.printf("批量消费消息回复: %s %s", resp.Status, string(body))
-	
+
 	switch resp.StatusCode {
 	case http.StatusOK:
 		var batchReceiveMessageResponse BatchReceiveMessageResponse
