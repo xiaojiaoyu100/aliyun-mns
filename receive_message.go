@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -12,10 +12,11 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
+// ReceiveMessage 收到消息
 type ReceiveMessage struct {
 	XMLName          xml.Name `xml:"Message"`
-	XmlNs            string   `xml:"xmlns,attr"`
-	MessageId        string   `xml:"MessageId"`
+	XMLNs            string   `xml:"xmlns,attr"`
+	MessageID        string   `xml:"MessageId"`
 	ReceiptHandle    string   `xml:"ReceiptHandle"`
 	MessageBody      string   `xml:"MessageBody"`
 	MessageBodyMD5   string   `xml:"MessageBodyMD5"`
@@ -26,21 +27,26 @@ type ReceiveMessage struct {
 	Priority         int      `xml:"Priority"`
 }
 
+// ReceiveMessageResponse 收到消息回复
 type ReceiveMessageResponse struct {
 	ReceiveMessage
 }
 
+// ReceiveMessageParam 收到消息请求
 type ReceiveMessageParam struct {
 	WaitSeconds   *int `url:"waitseconds,omitempty"`
 	NumOfMessages int  `url:"numOfMessages"`
 }
 
+// DefaultReceiveMessage 默认的收到消息请求参数
 func DefaultReceiveMessage() ReceiveMessageParam {
 	return ReceiveMessageParam{}
 }
 
+// ReceiveMessageParamSetter 收到消息请求参数设置函数
 type ReceiveMessageParamSetter func(*ReceiveMessageParam) error
 
+// WithReceiveMessageWaitSeconds 设置收到消息的long poll等待时长
 func WithReceiveMessageWaitSeconds(s int) ReceiveMessageParamSetter {
 	return func(rm *ReceiveMessageParam) error {
 		if s < minPollingWaitSeconds || s > maxPollingWaitSeconds {
@@ -57,6 +63,7 @@ const (
 	maxReceiveMessage     = 16
 )
 
+// WithReceiveMessageNumOfMessages 设置请求消息数量
 func WithReceiveMessageNumOfMessages(num int) ReceiveMessageParamSetter {
 	return func(rm *ReceiveMessageParam) error {
 		if num < minReceiveMessage || num > maxReceiveMessage {
@@ -67,6 +74,7 @@ func WithReceiveMessageNumOfMessages(num int) ReceiveMessageParamSetter {
 	}
 }
 
+// ReceiveMessage 接收消息
 func (c *Client) ReceiveMessage(name string, setters ...ReceiveMessageParamSetter) (*ReceiveMessageResponse, error) {
 
 	receiveMessage := DefaultReceiveMessage()

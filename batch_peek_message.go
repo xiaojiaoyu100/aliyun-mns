@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -10,12 +10,14 @@ import (
 	"time"
 )
 
+// BatchPeekMessageResponse 批量查看消息
 type BatchPeekMessageResponse struct {
 	XMLName      xml.Name       `xml:"Messages"`
-	XmlNs        string         `xml:"xmlns,attr"`
+	XMLNs        string         `xml:"xmlns,attr"`
 	PeekMessages []*PeekMessage `xml:"Message"`
 }
 
+// BatchPeekMessage 批量查看消息
 func (c *Client) BatchPeekMessage(name string) (*BatchPeekMessageResponse, error) {
 	requestLine := fmt.Sprintf(mnsBatchPeekMessage, name, "16")
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+requestLine, nil)

@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 // https://help.aliyun.com/document_detail/27485.html?spm=a2c4g.11186623.6.694.456f3ca8S3UHTC
 const (
@@ -12,7 +12,7 @@ const (
 	xMnsDate      = "x-mns-date"
 	connection    = "Connection"
 	server        = "Server"
-	xMnsRequestId = "x-mns-request-id"
+	xMnsRequestID = "x-mns-request-id"
 	xMnsMarker    = "x-mns-marker"
 	xMnsRetNumber = "x-mns-ret-number"
 	xMnxPrefix    = "x-mns-prefix"
@@ -20,5 +20,5 @@ const (
 )
 
 const (
-	textXml = "text/xml; charset=utf-8"
+	textXML = "text/xml; charset=utf-8"
 )

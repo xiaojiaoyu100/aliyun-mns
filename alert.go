@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 type alert interface {
 	NotifyAsync(content ...interface{})
@@ -6,6 +6,7 @@ type alert interface {
 
 var inst alert
 
+// SetAlert sets alert instance.
 func SetAlert(a alert) {
 	inst = a
 }

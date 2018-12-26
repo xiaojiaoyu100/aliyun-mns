@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
+// PeekMessage 查看消息
 type PeekMessage struct {
-	MessageId        string `xml:"MessageId"`
+	MessageID        string `xml:"MessageId"`
 	MessageBody      string `xml:"MessageBody"`
 	MessageBodyMD5   string `xml:"MessageBodyMD5"`
 	EnqueueTime      int64  `xml:"EnqueueTime"`
@@ -20,10 +21,12 @@ type PeekMessage struct {
 	Priority         int    `xml:"Priority"`
 }
 
+// PeekMessageResponse 查看消息回复
 type PeekMessageResponse struct {
 	PeekMessage
 }
 
+// PeekMessage 查看消息
 func (c *Client) PeekMessage(name string) (*PeekMessageResponse, error) {
 	requestLine := fmt.Sprintf(mnsPeekMessage, name)
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+requestLine, nil)

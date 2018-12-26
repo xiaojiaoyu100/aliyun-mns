@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// DeleteQueue 删除队列
 func (c *Client) DeleteQueue(name string) error {
 	requestLine := fmt.Sprintf(mnsDeleteQueue, name)
 	req, err := http.NewRequest(http.MethodDelete, c.endpoint+requestLine, nil)

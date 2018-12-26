@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"crypto/hmac"
@@ -12,18 +12,20 @@ import (
 	"time"
 )
 
+// Client 存储了阿里云的相关信息
 type Client struct {
 	endpoint        string
-	accessKeyId     string
+	accessKeyID     string
 	accessKeySecret string
 	queues          []*Queue
 	doneQueues      map[string]struct{}
 }
 
-func New(endpoint, accessKeyId, accessKeySecret string) *Client {
+// New 产生了一个新的Client
+func New(endpoint, accessKeyID, accessKeySecret string) *Client {
 	client := new(Client)
 	client.endpoint = endpoint
-	client.accessKeyId = accessKeyId
+	client.accessKeyID = accessKeyID
 	client.accessKeySecret = accessKeySecret
 	client.queues = make([]*Queue, 0)
 	client.doneQueues = make(map[string]struct{})
@@ -32,7 +34,7 @@ func New(endpoint, accessKeyId, accessKeySecret string) *Client {
 
 // https://help.aliyun.com/document_detail/27485.html?spm=a2c4g.11186623.6.694.15043ca8X9WLlR
 func (c *Client) finalizeHeader(request *http.Request, body []byte) {
-	request.Header.Set(contentType, textXml)
+	request.Header.Set(contentType, textXML)
 	request.Header.Set(date, time.Now().UTC().Format(http.TimeFormat))
 	request.Header.Set(xMnsVersion, "2015-06-06")
 	request.Header.Set(contentLength, strconv.FormatInt(int64(len(body)), 10))
@@ -41,12 +43,12 @@ func (c *Client) finalizeHeader(request *http.Request, body []byte) {
 	toSign := []byte(
 		request.Method + "\n" +
 			request.Header.Get(contentMd5) + "\n" +
-			textXml + "\n" +
+			textXML + "\n" +
 			request.Header.Get(date) + "\n" +
 			c.canonicalizedMNSHeaders(request.Header) + "\n" +
 			c.canonicalizedResource(request),
 	)
-	auth := fmt.Sprintf("MNS %s:%s", c.accessKeyId, c.signature(toSign))
+	auth := fmt.Sprintf("MNS %s:%s", c.accessKeyID, c.signature(toSign))
 	request.Header.Set(authorization, auth)
 }
 
@@ -59,7 +61,7 @@ func (c *Client) signature(toSign []byte) string {
 
 func (c *Client) canonicalizedMNSHeaders(header http.Header) string {
 	var mnsHeaders []string
-	for k, _ := range header {
+	for k := range header {
 		if l := strings.ToLower(k); strings.HasPrefix(l, "x-mns-") {
 			mnsHeaders = append(mnsHeaders, l)
 		}

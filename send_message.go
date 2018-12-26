@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"bytes"
@@ -13,11 +13,13 @@ import (
 	"time"
 )
 
+// SendMessageResponse 发送消息回复
 type SendMessageResponse struct {
 	SendMessage
 }
 
-func (c *Client) SendBase64EncodedJsonMessage(name string, messageBody interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
+// SendBase64EncodedJSONMessage 发送base64编码的json消息
+func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
 	var (
 		resp *SendMessageResponse
 		err  error
@@ -25,7 +27,7 @@ func (c *Client) SendBase64EncodedJsonMessage(name string, messageBody interface
 	ended := make(chan struct{})
 	go func() {
 		for {
-			resp, err = c.sendBase64EncodedJsonMessage(name, messageBody, setters...)
+			resp, err = c.sendBase64EncodedJSONMessage(name, messageBody, setters...)
 			switch {
 			case shouldRetry(err):
 				time.Sleep(time.Millisecond * 100)
@@ -44,6 +46,7 @@ func (c *Client) SendBase64EncodedJsonMessage(name string, messageBody interface
 	}
 }
 
+// SendMessage 发送消息
 func (c *Client) SendMessage(name string, messageBody string, setters ...MessageSetter) (*SendMessageResponse, error) {
 	var (
 		resp *SendMessageResponse
@@ -71,7 +74,7 @@ func (c *Client) SendMessage(name string, messageBody string, setters ...Message
 	}
 }
 
-func (c *Client) sendBase64EncodedJsonMessage(name string, body interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
+func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return nil, err

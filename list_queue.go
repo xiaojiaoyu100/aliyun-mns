@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -10,23 +10,27 @@ import (
 	"time"
 )
 
+// ListQueueRequest 获取队列列表参数
 type ListQueueRequest struct {
 	Marker    string
 	RetNumber string
 	Prefix    string
 }
 
+// QueueData 队列的属性
 type QueueData struct {
-	QueueUrl string `xml:"QueueURL"`
+	QueueURL string `xml:"QueueURL"`
 }
 
+// ListQueueResponse 获取队列的回复
 type ListQueueResponse struct {
 	XMLName    xml.Name     `xml:"Queues"`
-	XmlNs      string       `xml:"xmlns,attr"`
+	XMLNs      string       `xml:"xmlns,attr"`
 	Queues     []*QueueData `xml:"Queue"`
 	NextMarker string       `xml:"NextMarker"`
 }
 
+// BatchListQueue 批量请求队列
 func (c *Client) BatchListQueue() error {
 	request := new(ListQueueRequest)
 	request.RetNumber = "1000"
@@ -38,9 +42,9 @@ func (c *Client) BatchListQueue() error {
 	c.doneQueues = make(map[string]struct{})
 
 	for _, queue := range resp.Queues {
-		idx := strings.LastIndex(queue.QueueUrl, "/")
+		idx := strings.LastIndex(queue.QueueURL, "/")
 
-		name := queue.QueueUrl[idx+1:]
+		name := queue.QueueURL[idx+1:]
 
 		if _, ok := c.doneQueues[name]; !ok {
 			c.doneQueues[name] = struct{}{}
@@ -61,9 +65,9 @@ func (c *Client) BatchListQueue() error {
 		}
 
 		for _, queue := range resp.Queues {
-			idx := strings.LastIndex(queue.QueueUrl, "/")
+			idx := strings.LastIndex(queue.QueueURL, "/")
 
-			name := queue.QueueUrl[idx+1:]
+			name := queue.QueueURL[idx+1:]
 
 			if _, ok := c.doneQueues[name]; !ok {
 				c.doneQueues[name] = struct{}{}
@@ -74,6 +78,7 @@ func (c *Client) BatchListQueue() error {
 	}
 }
 
+// ListQueue 请求队列列表
 func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+mnsListQueue, nil)
 	if err != nil {

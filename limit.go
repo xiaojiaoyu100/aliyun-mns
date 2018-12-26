@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 const (
 	timeout = 12 // second

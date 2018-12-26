@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// QueueMetaOverride 修改队列属性
 func (c *Client) QueueMetaOverride(name string, setters ...QueueAttributeSetter) error {
 	attri := ModifiedAttribute{}
 	for _, setter := range setters {

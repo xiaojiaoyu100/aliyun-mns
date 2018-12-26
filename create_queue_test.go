@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import "testing"
 
@@ -30,6 +30,10 @@ func TestCheckQueueName(t *testing.T) {
 		},
 		5: {
 			Name: "a1*3",
+			Want: false,
+		},
+		6: {
+			Name: "stu_adu",
 			Want: false,
 		},
 	}

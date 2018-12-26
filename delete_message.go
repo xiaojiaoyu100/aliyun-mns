@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// DeleteMessage 删除消息
 func (c *Client) DeleteMessage(name, receiptHandle string) error {
 	requestLine := fmt.Sprintf(mnsDeleteMessage, name, receiptHandle)
 	req, err := http.NewRequest(http.MethodDelete, c.endpoint+requestLine, nil)

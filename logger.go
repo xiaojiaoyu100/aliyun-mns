@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"fmt"
@@ -23,11 +23,13 @@ func (dl debugLogger) printf(format string, v ...interface{}) {
 	}
 }
 
+// SetDebug 设置debug信息
 func SetDebug(l logger) {
 	globalLogger.debug = true
 	globalLogger.l = l
 }
 
+// QuickDebug 快速调试
 func QuickDebug() {
 	globalLogger.debug = true
 	globalLogger.l = log.New(os.Stderr, "[ALIYUN-MNS]", log.LstdFlags|log.Llongfile)

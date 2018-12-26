@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"encoding/xml"
@@ -35,6 +35,7 @@ const (
 	maxPollingWaitSeconds     = 30
 )
 
+// ModifiedAttribute 修改消息属性
 type ModifiedAttribute struct {
 	XMLName                xml.Name `xml:"Queue"`
 	DelaySeconds           *int     `xml:"DelaySeconds,omitempty"`
@@ -45,8 +46,10 @@ type ModifiedAttribute struct {
 	LoggingEnabled         *bool    `xml:"LoggingEnabled,omitempty"`
 }
 
+// QueueAttributeSetter 消息属性设置函数模板
 type QueueAttributeSetter func(attri *ModifiedAttribute) error
 
+// DefaultQueueAttri 返回默认的修改消息隊列的參數
 func DefaultQueueAttri() ModifiedAttribute {
 	var (
 		delaySeconds       = defaultDelaySeconds
@@ -63,7 +66,7 @@ func DefaultQueueAttri() ModifiedAttribute {
 	}
 }
 
-// 设置延时时间
+// WithDelaySeconds 设置延时时间
 func WithDelaySeconds(s int) QueueAttributeSetter {
 	return func(attri *ModifiedAttribute) error {
 		if s < minDelaySeconds || s > maxDelaySeconds {
@@ -74,7 +77,7 @@ func WithDelaySeconds(s int) QueueAttributeSetter {
 	}
 }
 
-// 设置消息体长度
+// WithMaximumMessageSize 设置消息体长度
 func WithMaximumMessageSize(size int) QueueAttributeSetter {
 	return func(attri *ModifiedAttribute) error {
 		if size < minMessageSize || size > maxMessageSize {
@@ -85,7 +88,7 @@ func WithMaximumMessageSize(size int) QueueAttributeSetter {
 	}
 }
 
-// 设置最长存活时间
+// WithMessageRetentionPeriod 设置最长存活时间
 func WithMessageRetentionPeriod(s int) QueueAttributeSetter {
 	return func(attri *ModifiedAttribute) error {
 		if s < minRetentionPeriod || s > maxRetentionPeriod {
@@ -96,7 +99,7 @@ func WithMessageRetentionPeriod(s int) QueueAttributeSetter {
 	}
 }
 
-// 设置可见时间
+// WithVisibilityTimeout 设置可见时间
 func WithVisibilityTimeout(s int) QueueAttributeSetter {
 	return func(attri *ModifiedAttribute) error {
 		if s < minVisibilityTimeout || s > maxVisibilityTimeout {
@@ -107,7 +110,7 @@ func WithVisibilityTimeout(s int) QueueAttributeSetter {
 	}
 }
 
-// 设置长轮询时间
+// WithPollingWaitSeconds 设置长轮询时间
 func WithPollingWaitSeconds(s int) QueueAttributeSetter {
 	return func(attri *ModifiedAttribute) error {
 		if s < minPollingWaitSeconds || s > maxPollingWaitSeconds {
@@ -118,7 +121,7 @@ func WithPollingWaitSeconds(s int) QueueAttributeSetter {
 	}
 }
 
-// 设置日志开启
+// WithLoggingEnabled 设置日志开启
 func WithLoggingEnabled(flag bool) QueueAttributeSetter {
 	return func(attri *ModifiedAttribute) error {
 		attri.LoggingEnabled = &flag

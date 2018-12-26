@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ const (
 	changeVisibilityInterval = 5
 )
 
+// AddQueue 添加一个消息队列
 func (c *Client) AddQueue(q *Queue) {
 	if q.Parallel == 0 {
 		q.Parallel = 1
@@ -26,6 +27,7 @@ func (c *Client) AddQueue(q *Queue) {
 	c.queues = append(c.queues, q)
 }
 
+// PeriodicallyFetchQueues 周期性拉取消息队列与内存的消息队列做比较
 func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 	fetchQueueReady := make(chan struct{})
 	ticker := time.Tick(time.Minute * 3)
@@ -55,6 +57,7 @@ func (c *Client) PeriodicallyFetchQueues() chan struct{} {
 	return fetchQueueReady
 }
 
+// CreateQueueList 创建消息队列
 func (c *Client) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} {
 	createQueueReady := make(chan struct{})
 	go func() {
@@ -85,6 +88,7 @@ func (c *Client) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} {
 	return createQueueReady
 }
 
+// Schedule 使消息队列开始运作起来
 func (c *Client) Schedule(createQueueReady chan struct{}) {
 	go func() {
 		for {
@@ -116,12 +120,14 @@ func (c *Client) Schedule(createQueueReady chan struct{}) {
 	}()
 }
 
+// Run 入口函数
 func (c *Client) Run() {
 	fetchQueueReady := c.PeriodicallyFetchQueues()
 	createQueueReady := c.CreateQueueList(fetchQueueReady)
 	c.Schedule(createQueueReady)
 }
 
+// LongPollQueueMessage 长轮询消息
 func (c *Client) LongPollQueueMessage(queue *Queue) {
 	go func() {
 		for {
@@ -153,6 +159,7 @@ func (c *Client) LongPollQueueMessage(queue *Queue) {
 	}()
 }
 
+// OnReceive 消息队列处理函数
 func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	errChan := make(chan error)
 	ticker := time.NewTicker(time.Second * changeVisibilityInterval)
@@ -220,6 +227,7 @@ func (c *Client) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	}
 }
 
+// ConsumeQueueMessage 消费消息
 func (c *Client) ConsumeQueueMessage(queue *Queue) {
 	go func() {
 		for {
@@ -227,7 +235,7 @@ func (c *Client) ConsumeQueueMessage(queue *Queue) {
 			case receiveMessage := <-queue.receiveMessageChan:
 				{
 					if receiveMessage.NextVisibleTime+1000*changeVisibilityInterval < TimestampInMs() {
-						globalLogger.printf("queue=%s overstock message_id=%s message_body=%s.", queue.Name, receiveMessage.MessageId, receiveMessage.MessageBody)
+						globalLogger.printf("queue=%s overstock message_id=%s message_body=%s.", queue.Name, receiveMessage.MessageID, receiveMessage.MessageBody)
 						continue
 					}
 

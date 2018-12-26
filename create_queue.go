@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"bytes"
@@ -17,6 +17,7 @@ func checkQueueName(name string) bool {
 	return regex.MatchString(name)
 }
 
+// CreateQueue 创建一个消息队列
 func (c *Client) CreateQueue(name string, setters ...QueueAttributeSetter) (string, error) {
 	if !checkQueueName(name) {
 		return "", errors.New("unqualified queue name")

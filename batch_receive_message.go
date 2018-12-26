@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"encoding/xml"
@@ -10,18 +10,21 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
+// BatchReceiveMessageResponse 批量消費消息
 type BatchReceiveMessageResponse struct {
 	XMLName         xml.Name          `xml:"Messages"`
-	XmlNs           string            `xml:"xmlns,attr"`
+	XMLNs           string            `xml:"xmlns,attr"`
 	ReceiveMessages []*ReceiveMessage `xml:"Message"`
 }
 
+// DefaultBatchReceiveMessage 返回默认的批量消费消息的参数
 func DefaultBatchReceiveMessage() ReceiveMessageParam {
 	return ReceiveMessageParam{
 		NumOfMessages: defaultReceiveMessage,
 	}
 }
 
+// BatchReceiveMessage 批量消费消息
 func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParamSetter) (*BatchReceiveMessageResponse, error) {
 	receiveMessage := DefaultBatchReceiveMessage()
 	for _, setter := range setters {
@@ -57,7 +60,7 @@ func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParam
 	}
 
 	globalLogger.printf("批量消费消息回复: %s %s", resp.Status, string(body))
-
+	
 	switch resp.StatusCode {
 	case http.StatusOK:
 		var batchReceiveMessageResponse BatchReceiveMessageResponse

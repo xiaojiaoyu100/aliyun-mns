@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"bytes"
@@ -11,22 +11,25 @@ import (
 	"time"
 )
 
+// SendMessage 发送消息
 type SendMessage struct {
 	XMLName        xml.Name `xml:"Message"`
-	XmlNs          string   `xml:"xmlns,attr"`
+	XMLNs          string   `xml:"xmlns,attr"`
 	ErrorCode      string   `xml:"ErrorCode"`
 	ErrorMessage   string   `xml:"ErrorMessage"`
-	MessageId      string   `xml:"MessageId"`
+	MessageID      string   `xml:"MessageId"`
 	MessageBodyMD5 string   `xml:"MessageBodyMD5"`
 	ReceiptHandle  string   `xml:"ReceiptHandle"` // 发送延时消息才有返回
 }
 
+// BatchSendMessageResponse 批量发送消息回复
 type BatchSendMessageResponse struct {
 	XMLName      xml.Name       `xml:"Messages"`
-	XmlNs        string         `xml:"xmlns,attr"`
+	XMLNs        string         `xml:"xmlns,attr"`
 	SendMessages []*SendMessage `xml:"Message"`
 }
 
+// BatchSendMessage 批量发送消息
 func (c *Client) BatchSendMessage(name string, messageList ...*Message) (*BatchSendMessageResponse, error) {
 	if len(messageList) > 16 {
 		return nil, batchSendMessageNumLimitError
@@ -40,7 +43,7 @@ func (c *Client) BatchSendMessage(name string, messageList ...*Message) (*BatchS
 
 	originalMessageList := messageList
 
-	for idx, _ := range originalMessageList {
+	for idx := range originalMessageList {
 		roundIndexList = append(roundIndexList, idx)
 	}
 

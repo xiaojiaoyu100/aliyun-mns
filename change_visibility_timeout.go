@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -11,13 +11,15 @@ import (
 	"time"
 )
 
+// ChangeVisibilityTimeoutResponse 修改消息可见时长回复
 type ChangeVisibilityTimeoutResponse struct {
 	XMLName         xml.Name `xml:"ChangeVisibility"`
-	XmlNs           string   `xml:"xmlns,attr"`
+	XMLNs           string   `xml:"xmlns,attr"`
 	ReceiptHandle   string   `xml:"ReceiptHandle"`
 	NextVisibleTime int64    `xml:"NextVisibleTime"`
 }
 
+// ChangeVisibilityTimeout 修改消息可见时长
 func (c *Client) ChangeVisibilityTimeout(name string, receiptHandle string, visibilityTimeout int) (*ChangeVisibilityTimeoutResponse, error) {
 	if visibilityTimeout < minVisibilityTimeout || visibilityTimeout > maxVisibilityTimeout {
 		return nil, visibilityTimeoutError

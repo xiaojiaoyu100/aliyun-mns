@@ -1,4 +1,4 @@
-package aliyun_mns
+package alimns
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// QueueAttributeResponse 消息队列属性回复
 type QueueAttributeResponse struct {
 	XMLName                xml.Name `xml:"Queue"`
 	QueueName              string   `xml:"QueueName"`
@@ -26,6 +27,7 @@ type QueueAttributeResponse struct {
 	LoggingEnabled         bool     `xml:"LoggingEnabled"`
 }
 
+// GetQueueAttributes 获取消息队列属性
 func (c *Client) GetQueueAttributes(name string) (*QueueAttributeResponse, error) {
 	requestLine := fmt.Sprintf(mnsGetQueueAttributes, name)
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+requestLine, nil)
