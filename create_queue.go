@@ -42,7 +42,11 @@ func (c *Client) CreateQueue(name string, setters ...QueueAttributeSetter) (stri
 	}
 	c.finalizeHeader(req, body)
 
-	globalLogger.printf("创建队列请求: %s %s %s", req.Method, req.URL.String(), string(body))
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		WithField("body", string(body)).
+		Info("创建队列请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -61,7 +65,11 @@ func (c *Client) CreateQueue(name string, setters ...QueueAttributeSetter) (stri
 		return "", err
 	}
 
-	globalLogger.printf("创建队列回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("创建队列回复")
 
 	switch resp.StatusCode {
 	case http.StatusCreated:

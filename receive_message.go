@@ -97,7 +97,10 @@ func (c *Client) ReceiveMessage(name string, setters ...ReceiveMessageParamSette
 
 	c.finalizeHeader(req, nil)
 
-	globalLogger.printf("消费消息请求: %s %s", req.Method, req.URL.String())
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		Info("消费消息请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -116,7 +119,11 @@ func (c *Client) ReceiveMessage(name string, setters ...ReceiveMessageParamSette
 		return nil, err
 	}
 
-	globalLogger.printf("消费消息回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("消费消息回复")
 
 	switch resp.StatusCode {
 	case http.StatusOK:

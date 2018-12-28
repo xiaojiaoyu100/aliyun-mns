@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -30,54 +29,6 @@ type ListQueueResponse struct {
 	NextMarker string       `xml:"NextMarker"`
 }
 
-// BatchListQueue 批量请求队列
-func (c *Client) BatchListQueue() error {
-	request := new(ListQueueRequest)
-	request.RetNumber = "1000"
-	resp, err := c.ListQueue(request)
-	if err != nil {
-		return err
-	}
-
-	c.doneQueues = make(map[string]struct{})
-
-	for _, queue := range resp.Queues {
-		idx := strings.LastIndex(queue.QueueURL, "/")
-
-		name := queue.QueueURL[idx+1:]
-
-		if _, ok := c.doneQueues[name]; !ok {
-			c.doneQueues[name] = struct{}{}
-		}
-	}
-
-	for {
-		if resp.NextMarker == "" {
-			return nil
-		}
-
-		resp, err = c.ListQueue(&ListQueueRequest{
-			Marker: resp.NextMarker,
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, queue := range resp.Queues {
-			idx := strings.LastIndex(queue.QueueURL, "/")
-
-			name := queue.QueueURL[idx+1:]
-
-			if _, ok := c.doneQueues[name]; !ok {
-				c.doneQueues[name] = struct{}{}
-			}
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-}
-
 // ListQueue 请求队列列表
 func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+mnsListQueue, nil)
@@ -97,7 +48,10 @@ func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error
 
 	c.finalizeHeader(req, nil)
 
-	globalLogger.printf("获取队列列表请求: %s %s", req.Method, req.URL.String())
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		Info("获取队列列表请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -116,7 +70,11 @@ func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error
 		return nil, err
 	}
 
-	globalLogger.printf("获取队列列表回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("获取队列列表回复")
 
 	switch resp.StatusCode {
 	case http.StatusOK:

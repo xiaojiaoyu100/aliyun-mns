@@ -59,7 +59,11 @@ start:
 	}
 	c.finalizeHeader(req, body)
 
-	globalLogger.printf("批量发送消息请求: %s %s %s", req.Method, req.URL.String(), string(body))
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		WithField("body", string(body)).
+		Info("批量发送消息请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -79,7 +83,11 @@ start:
 		return nil, err
 	}
 
-	globalLogger.printf("批量发送消息回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("批量发送消息回复")
 
 	switch resp.StatusCode {
 	case http.StatusCreated,
@@ -98,7 +106,10 @@ start:
 			case internalError.Error():
 				retryIdx = append(retryIdx, idx)
 			default:
-				notifyAsync("批量发送消息部分失败: ", batchSendMessageResponse, err)
+				contextLogger.
+					WithField("err", err).
+					WithField("body", string(body)).
+					Error("批量发送消息部分失败")
 			}
 		}
 		if len(retryIdx) == 0 {

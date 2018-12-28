@@ -46,7 +46,10 @@ func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParam
 
 	c.finalizeHeader(req, nil)
 
-	globalLogger.printf("批量消费消息请求: %s %s", req.Method, req.URL.String())
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		Info("批量消费消息请求")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -59,7 +62,11 @@ func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParam
 		return nil, err
 	}
 
-	globalLogger.printf("批量消费消息回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("批量消费消息回复")
 
 	switch resp.StatusCode {
 	case http.StatusOK:

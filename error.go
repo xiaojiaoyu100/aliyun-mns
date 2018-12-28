@@ -22,6 +22,7 @@ const (
 	messageDelaySecondsOutOfRangeError = MnsError("MessageDelaySecondsOutOfRange")
 	batchSendMessageTryLimitError      = MnsError("BatchSendMessageTryLimit")
 	batchSendMessageNumLimitError      = MnsError("BatchSendMessageNumLimit")
+	handleCrashError                   = MnsError("handleCrash")
 )
 
 // aliyun mns error code
@@ -64,6 +65,11 @@ func IsSendMessageTimeout(err error) bool {
 // IsMessageDelaySecondsOutOfRange 延时时长是否合理
 func IsMessageDelaySecondsOutOfRange(err error) bool {
 	return err == messageDelaySecondsOutOfRangeError
+}
+
+// IsHandleCrash 是否是处理函数崩溃错误
+func IsHandleCrash(err error) bool {
+	return err == handleCrashError
 }
 
 // RespErr 阿里云回复错误

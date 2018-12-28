@@ -79,7 +79,7 @@ func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, set
 	if err != nil {
 		return nil, err
 	}
-	globalLogger.printf("queue: %s, send: %s", name, string(b))
+	contextLogger.WithField("queue", name).WithField("body", body).Info("sendBase64EncodedJSONMessage")
 	b64Body := base64.StdEncoding.EncodeToString(b)
 	return c.sendMessage(name, b64Body, setters...)
 }
@@ -108,7 +108,11 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 	}
 	c.finalizeHeader(req, body)
 
-	globalLogger.printf("发送消息请求: %s %s %s", req.Method, req.URL.String(), string(body))
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		WithField("body", string(body)).
+		Info("发送消息请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -127,7 +131,11 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 		return nil, err
 	}
 
-	globalLogger.printf("发送消息回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("发送消息回复")
 
 	switch resp.StatusCode {
 	case http.StatusCreated:

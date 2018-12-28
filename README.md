@@ -15,34 +15,30 @@ aliyun-mns是对阿里云消息服务的封装，具有以下特点：
 package main
 
 import (
-	"log"
-
 	"github.com/xiaojiaoyu100/aliyun-mns"
 )
 
-func HandleExample(rm *aliyun_mns.ReceiveMessage) error {
-	log.Println(rm.MessageBody)
+func Handle(rm *alimns.ReceiveMessage) error {
 	return nil
 }
 
 func main() {
-	aliyun_mns.QuickDebug()
-	c := aliyun_mns.New(
-		endpoint,
-		accessKeyId,
-		accessKeySecret)
-	c.AddQueue(&aliyun_mns.Queue{
-		Name:     "example",
-		Parallel: 2,
-		QueueAttributeSetters: []aliyun_mns.QueueAttributeSetter{
-			aliyun_mns.WithDelaySeconds(10)},
-		OnReceive: HandleExample,
-	})
-	c.Run()
+	client := alimns.NewClient(endpoint, accessKeyId, accessKeySecret)
+	consumer := alimns.NewConsumer(client)
+	consumer.AddQueue(
+		&alimns.Queue{
+			Name: 	"test",
+			Parallel: 2,
+			OnReceive: Handle,
+		},
+		)
+	consumer.Run()
+	select {}
 }
 ```
 
 # 生产者
 ```go
-c.SendMessage("example", "test_data")
+producer := alimns.NewProducer(client)
+producer.SendBase64EncodedJSONMessage()
 ```

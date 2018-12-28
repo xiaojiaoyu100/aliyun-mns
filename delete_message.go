@@ -19,7 +19,10 @@ func (c *Client) DeleteMessage(name, receiptHandle string) error {
 	}
 	c.finalizeHeader(req, nil)
 
-	globalLogger.printf("删除消息请求: %s %s", req.Method, req.URL.String())
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		Info("删除消息请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -38,7 +41,11 @@ func (c *Client) DeleteMessage(name, receiptHandle string) error {
 		return err
 	}
 
-	globalLogger.printf("删除消息回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("删除消息回复")
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:

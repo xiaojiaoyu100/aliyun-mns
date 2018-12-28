@@ -5,5 +5,5 @@ const (
 )
 
 const (
-	dequeueCount = 3
+	dequeueCount = 7
 )

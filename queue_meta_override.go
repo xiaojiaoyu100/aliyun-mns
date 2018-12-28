@@ -32,7 +32,11 @@ func (c *Client) QueueMetaOverride(name string, setters ...QueueAttributeSetter)
 	}
 	c.finalizeHeader(req, body)
 
-	globalLogger.printf("设置队列属性请求: %s %s %s", req.Method, req.URL.String(), string(body))
+	contextLogger.
+		WithField("method", req.Method).
+		WithField("url", req.URL.String()).
+		WithField("body", string(body)).
+		Info("设置队列属性请求")
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	_ = time.AfterFunc(time.Second*timeout, func() {
@@ -51,7 +55,11 @@ func (c *Client) QueueMetaOverride(name string, setters ...QueueAttributeSetter)
 		return err
 	}
 
-	globalLogger.printf("设置队列属性回复: %s %s", resp.Status, string(body))
+	contextLogger.
+		WithField("status", resp.Status).
+		WithField("body", string(body)).
+		WithField("url", req.URL.String()).
+		Info("设置队列属性回复")
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:

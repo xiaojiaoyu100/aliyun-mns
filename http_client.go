@@ -9,3 +9,11 @@ import (
 var httpClient = &http.Client{
 	Timeout: 60 * time.Second,
 }
+
+func init() {
+	roundTripper := http.DefaultTransport
+	if transport, ok := roundTripper.(*http.Transport); ok {
+		transport.MaxIdleConns = 100
+		transport.MaxIdleConnsPerHost = 100
+	}
+}

@@ -2,9 +2,11 @@ package alimns
 
 import (
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -17,19 +19,22 @@ type Client struct {
 	endpoint        string
 	accessKeyID     string
 	accessKeySecret string
-	queues          []*Queue
-	doneQueues      map[string]struct{}
 }
 
-// New 产生了一个新的Client
-func New(endpoint, accessKeyID, accessKeySecret string) *Client {
-	client := new(Client)
-	client.endpoint = endpoint
-	client.accessKeyID = accessKeyID
-	client.accessKeySecret = accessKeySecret
-	client.queues = make([]*Queue, 0)
-	client.doneQueues = make(map[string]struct{})
-	return client
+// NewClient 返回Client的实例
+func NewClient(endpoint, accessKeyID, accessKeySecret string) Client {
+	return Client{
+		endpoint:        endpoint,
+		accessKeyID:     accessKeyID,
+		accessKeySecret: accessKeySecret,
+	}
+}
+
+// Base64Md5 md5值用base64编码
+func Base64Md5(s string) string {
+	hash := md5.New()
+	io.WriteString(hash, s)
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
 }
 
 // https://help.aliyun.com/document_detail/27485.html?spm=a2c4g.11186623.6.694.15043ca8X9WLlR
