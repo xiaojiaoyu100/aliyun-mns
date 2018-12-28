@@ -20,6 +20,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/willf/bitset"
+  packages = ["."]
+  revision = "e553b05586428962bf7058d1044519d87ca72d74"
+  version = "v1.1.9"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -37,6 +43,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3119529bd7d2b710871594190a0ddcf6f9e2d2d30d64e82ef6a248987c61ff6e"
+  inputs-digest = "2ce58da820a06c06d2a806b9bcce8fc3c568344d03f7bbb6669b44cb22fe95f6"
   solver-name = "gps-cdcl"
   solver-version = 1

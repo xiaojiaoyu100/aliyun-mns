@@ -1,5 +1,9 @@
 package alimns
 
+import (
+	"github.com/willf/bitset"
+)
+
 // OnReceiveFunc 消息处理函数模板
 type OnReceiveFunc func(message *ReceiveMessage) error
 
@@ -9,16 +13,17 @@ type Queue struct {
 	Parallel              int
 	QueueAttributeSetters []QueueAttributeSetter
 	OnReceive             OnReceiveFunc
-	isRunning             bool
+	IsScheduled           bool
 	receiveMessageChan    chan *ReceiveMessage
 	longPollQuit          chan struct{}
 	consumeQuit           chan struct{}
+	statusBits            *bitset.BitSet
 }
 
 // Stop 使消息队列拉取消息和消费消息停止
 func (q *Queue) Stop() {
-	if q.isRunning {
-		q.isRunning = false
+	if q.IsScheduled {
+		q.IsScheduled = false
 		close(q.longPollQuit)
 		close(q.consumeQuit)
 	}

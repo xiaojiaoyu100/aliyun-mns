@@ -1,10 +1,15 @@
 package alimns
 
 import (
+	"os"
+	"os/signal"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+
+	"github.com/willf/bitset"
 )
 
 const (
@@ -16,6 +21,8 @@ type Consumer struct {
 	Client
 	queues     []*Queue
 	doneQueues map[string]struct{}
+	shutdown   chan struct{}
+	isClosed   bool
 }
 
 // NewConsumer 生成了一个消费者
@@ -24,6 +31,7 @@ func NewConsumer(client Client) *Consumer {
 	consumer.Client = client
 	consumer.queues = make([]*Queue, 0)
 	consumer.doneQueues = make(map[string]struct{})
+	consumer.shutdown = make(chan struct{})
 	return consumer
 }
 
@@ -87,6 +95,7 @@ func (c *Consumer) AddQueue(q *Queue) {
 	q.receiveMessageChan = make(chan *ReceiveMessage, l)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
+	q.statusBits = bitset.New(uint(l))
 	c.queues = append(c.queues, q)
 }
 
@@ -158,7 +167,11 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 			select {
 			case <-createQueueReady:
 				for _, queue := range c.queues {
-					if queue.isRunning {
+					if c.isClosed {
+						continue
+					}
+
+					if queue.IsScheduled {
 						continue
 					}
 
@@ -170,12 +183,12 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 						continue
 					}
 
-					queue.isRunning = true
+					queue.IsScheduled = true
 
 					c.LongPollQueueMessage(queue)
 
 					for i := 1; i <= queue.Parallel; i++ {
-						c.ConsumeQueueMessage(queue)
+						c.ConsumeQueueMessage(queue, i)
 					}
 				}
 			}
@@ -188,6 +201,45 @@ func (c *Consumer) Run() {
 	fetchQueueReady := c.PeriodicallyFetchQueues()
 	createQueueReady := c.CreateQueueList(fetchQueueReady)
 	c.Schedule(createQueueReady)
+	c.gracefulShutdown()
+	select {
+	case <-c.shutdown:
+		contextLogger.Info("Consumer is closed!")
+		return
+	}
+}
+
+func (c *Consumer) popCount() uint {
+	popCount := uint(0)
+	for _, queue := range c.queues {
+		popCount += queue.statusBits.Count()
+	}
+	return popCount
+}
+
+func (c *Consumer) gracefulShutdown() {
+	gracefulStop := make(chan os.Signal)
+	signal.Notify(gracefulStop, os.Kill, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-gracefulStop
+		contextLogger.WithField("signal", sig.String()).Info("accepting an os signal")
+
+		c.isClosed = true
+		for _, queue := range c.queues {
+			queue.Stop()
+		}
+
+		select {
+		case <-time.After(10 * time.Second):
+			contextLogger.WithField("count", c.popCount()).Info("timeout shutdown")
+			close(c.shutdown)
+		case <-time.Tick(time.Second):
+			if c.popCount() == 0 {
+				contextLogger.Info("graceful shutdown")
+				close(c.shutdown)
+			}
+		}
+	}()
 }
 
 // LongPollQueueMessage 长轮询消息
@@ -299,7 +351,7 @@ func Parallel() int {
 }
 
 // ConsumeQueueMessage 消费消息
-func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
+func (c *Consumer) ConsumeQueueMessage(queue *Queue, idx int) {
 	go func() {
 		for {
 			select {
@@ -318,7 +370,9 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 							Error("The message is dequeued many times.")
 					}
 
+					queue.statusBits.Set(uint(idx))
 					c.OnReceive(queue, receiveMessage)
+					queue.statusBits.Clear(uint(idx))
 				}
 			case <-queue.consumeQuit:
 				{

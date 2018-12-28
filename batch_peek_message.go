@@ -53,7 +53,7 @@ func (c *Client) BatchPeekMessage(name string) (*BatchPeekMessageResponse, error
 		WithField("body", string(body)).
 		WithField("url", req.URL.String()).
 		Info("批量查看消息回复")
-	
+
 	switch resp.StatusCode {
 	case http.StatusOK:
 		var batchPeekMessageResponse BatchPeekMessageResponse
