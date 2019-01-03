@@ -229,14 +229,21 @@ func (c *Consumer) gracefulShutdown() {
 			queue.Stop()
 		}
 
-		select {
-		case <-time.After(10 * time.Second):
-			contextLogger.WithField("count", c.popCount()).Info("timeout shutdown")
-			close(c.shutdown)
-		case <-time.Tick(time.Second):
-			if c.popCount() == 0 {
-				contextLogger.Info("graceful shutdown")
+		doom := time.NewTimer(10 * time.Second)
+		check := time.NewTicker(1 * time.Second)
+
+		for {
+			select {
+			case <-doom.C:
+				contextLogger.WithField("count", c.popCount()).Info("timeout shutdown")
 				close(c.shutdown)
+				return
+			case <-check.C:
+				if c.popCount() == 0 {
+					contextLogger.Info("graceful shutdown")
+					close(c.shutdown)
+					return
+				}
 			}
 		}
 	}()

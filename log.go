@@ -15,6 +15,11 @@ func init() {
 		TimestampFormat: "2006-01-02 15:04:05",
 		PrettyPrint:     true})
 	log.SetReportCaller(true)
-	log.SetOutput(os.Stdout)
+	log.SetOutput(os.Stderr)
 	log.SetLevel(log.InfoLevel)
+}
+
+// AddLogHook adds a log hook.
+func AddLogHook(hook log.Hook) {
+	log.AddHook(hook)
 }
