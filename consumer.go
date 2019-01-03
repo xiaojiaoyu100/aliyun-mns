@@ -171,7 +171,7 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 						continue
 					}
 
-					if queue.IsScheduled {
+					if queue.isScheduled {
 						continue
 					}
 
@@ -183,7 +183,7 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 						continue
 					}
 
-					queue.IsScheduled = true
+					queue.isScheduled = true
 
 					c.LongPollQueueMessage(queue)
 
@@ -296,7 +296,10 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				errChan <- handleCrashError
 			}
 		}()
-		errChan <- queue.OnReceive(receiveMsg)
+		m := new(M)
+		m.MessageBody = receiveMsg.MessageBody
+		m.MessageBodyMD5 = receiveMsg.MessageBodyMD5
+		errChan <- queue.OnReceive(m)
 	}()
 
 	go func() {

@@ -8,7 +8,7 @@ aliyun-mns是对阿里云消息服务的封装，具有以下特点：
 * 消息处理时长自适应
 * 发送消息重试
 * 监控报警
-* 优雅的关闭
+* 优雅的关闭消费者
 
 # 消费者
 
@@ -19,7 +19,7 @@ import (
 	"github.com/xiaojiaoyu100/aliyun-mns"
 )
 
-func Handle(rm *alimns.ReceiveMessage) error {
+func Handle(m *alimns.M) error {
 	return nil
 }
 
@@ -30,7 +30,7 @@ func main() {
 		&alimns.Queue{
 			Name: 	"test",
 			Parallel: 2,
-			OnReceive: Handle,
+			Handler: Handle,
 		},
 		)
 	consumer.Run()
