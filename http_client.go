@@ -13,7 +13,7 @@ var httpClient = &http.Client{
 func init() {
 	roundTripper := http.DefaultTransport
 	if transport, ok := roundTripper.(*http.Transport); ok {
-		transport.MaxIdleConns = 100
-		transport.MaxIdleConnsPerHost = 100
+		transport.MaxIdleConns = 2000
+		transport.MaxIdleConnsPerHost = 2000
 	}
 }

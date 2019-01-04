@@ -16,6 +16,7 @@ import (
 
 // Client 存储了阿里云的相关信息
 type Client struct {
+	queuePrefix     string
 	endpoint        string
 	accessKeyID     string
 	accessKeySecret string
@@ -28,6 +29,11 @@ func NewClient(endpoint, accessKeyID, accessKeySecret string) Client {
 		accessKeyID:     accessKeyID,
 		accessKeySecret: accessKeySecret,
 	}
+}
+
+// SetQueuePrefix sets the query param for ListQueue.
+func (c *Client) SetQueuePrefix(prefix string) {
+	c.queuePrefix = prefix
 }
 
 // Base64Md5 md5值用base64编码

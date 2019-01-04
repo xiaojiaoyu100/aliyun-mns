@@ -39,6 +39,7 @@ func NewConsumer(client Client) *Consumer {
 func (c *Consumer) BatchListQueue() error {
 	request := new(ListQueueRequest)
 	request.RetNumber = "1000"
+	request.Prefix = c.queuePrefix
 	resp, err := c.ListQueue(request)
 	if err != nil {
 		return err
@@ -61,9 +62,9 @@ func (c *Consumer) BatchListQueue() error {
 			return nil
 		}
 
-		resp, err = c.ListQueue(&ListQueueRequest{
-			Marker: resp.NextMarker,
-		})
+		request.Marker = resp.NextMarker
+
+		resp, err = c.ListQueue(request)
 
 		if err != nil {
 			return err
@@ -222,7 +223,7 @@ func (c *Consumer) gracefulShutdown() {
 	signal.Notify(gracefulStop, os.Kill, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-gracefulStop
-		contextLogger.WithField("signal", sig.String()).Info("accepting an os signal")
+		contextLogger.WithField("signal", sig.String()).Info("Accepting an os signal...")
 
 		c.isClosed = true
 		for _, queue := range c.queues {
@@ -239,7 +240,9 @@ func (c *Consumer) gracefulShutdown() {
 				close(c.shutdown)
 				return
 			case <-check.C:
-				if c.popCount() == 0 {
+				popCount := c.popCount()
+				contextLogger.WithField("count", popCount).Info("check")
+				if popCount == 0 {
 					contextLogger.Info("graceful shutdown")
 					close(c.shutdown)
 					return
@@ -386,7 +389,7 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue, idx int) {
 				}
 			case <-queue.consumeQuit:
 				{
-					contextLogger.WithField("queue", queue.Name).Info("quit")
+					contextLogger.WithField("queue", queue.Name).Info("Consumer quit")
 					return
 				}
 			}

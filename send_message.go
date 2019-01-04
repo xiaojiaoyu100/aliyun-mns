@@ -46,34 +46,6 @@ func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface
 	}
 }
 
-// SendMessage 发送消息
-func (c *Client) SendMessage(name string, messageBody string, setters ...MessageSetter) (*SendMessageResponse, error) {
-	var (
-		resp *SendMessageResponse
-		err  error
-	)
-	ended := make(chan struct{})
-	go func() {
-		for {
-			resp, err = c.sendMessage(name, messageBody, setters...)
-			switch {
-			case shouldRetry(err):
-				time.Sleep(time.Millisecond * 100)
-				continue
-			default:
-				close(ended)
-				return
-			}
-		}
-	}()
-	select {
-	case <-time.After(time.Second * 60):
-		return nil, sendMessageTimeoutError
-	case <-ended:
-		return resp, err
-	}
-}
-
 func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
