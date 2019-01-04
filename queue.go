@@ -8,6 +8,7 @@ import (
 type M struct {
 	MessageBody    string
 	MessageBodyMD5 string
+	EnqueueTime    int64
 }
 
 // Handler 消息处理函数模板
