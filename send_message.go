@@ -53,7 +53,12 @@ func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, set
 	}
 	contextLogger.WithField("queue", name).WithField("body", body).Info("sendBase64EncodedJSONMessage")
 	b64Body := base64.StdEncoding.EncodeToString(b)
-	return c.sendMessage(name, b64Body, setters...)
+	contextLogger.WithField("queue", name).WithField("b64body", b64Body).Info("sendBase64EncodedJSONMessage")
+	resp, err := c.sendMessage(name, b64Body, setters...)
+	if err != nil {
+		contextLogger.WithField("queue", name).WithError(err).WithField("body", body).Error("sendBase64EncodedJSONMessage")
+	}
+	return resp, err
 }
 
 func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter) (*SendMessageResponse, error) {
