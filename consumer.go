@@ -364,6 +364,11 @@ func Parallel() int {
 	return runtime.NumCPU()
 }
 
+// MaxParallel 返回最大并发数
+func MaxParallel() int {
+	return maxReceiveMessage
+}
+
 // ConsumeQueueMessage 消费消息
 func (c *Consumer) ConsumeQueueMessage(queue *Queue, idx int) {
 	go func() {
