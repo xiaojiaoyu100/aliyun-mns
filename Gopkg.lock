@@ -16,8 +16,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
-  version = "v1.2.0"
+  revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
+  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/willf/bitset"
@@ -43,6 +43,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2ce58da820a06c06d2a806b9bcce8fc3c568344d03f7bbb6669b44cb22fe95f6"
+  inputs-digest = "df5908c3874362e7c5a6716bbae0c97a1502d1f60e96c296e908bab9973d1901"
   solver-name = "gps-cdcl"
   solver-version = 1
