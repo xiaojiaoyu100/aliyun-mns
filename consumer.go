@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"encoding/base64"
 	"os"
 	"os/signal"
 	"runtime"
@@ -300,7 +301,17 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			}
 		}()
 		m := new(M)
-		m.MessageBody = receiveMsg.MessageBody
+		var body string
+		if IsBase54(receiveMsg.MessageBody) {
+			b64bytes, err := base64.StdEncoding.DecodeString(m.MessageBody)
+			if err != nil {
+				contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
+			}
+			body = string(b64bytes)
+		} else {
+			body = receiveMsg.MessageBody
+		}
+		m.MessageBody = body
 		m.MessageBodyMD5 = receiveMsg.MessageBodyMD5
 		m.EnqueueTime = receiveMsg.EnqueueTime
 		errChan <- queue.OnReceive(m)
@@ -336,9 +347,12 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	case err := <-errChan:
 		{
 			close(tickerStop)
-			if err != nil && !IsHandleCrash(err) {
+			switch {
+			case IsHandleCrash(err):
+				// 这里不报警
+			case err != nil:
 				contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("OnReceive")
-			} else {
+			case err == nil:
 				rwLock.RLock()
 				err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
 				rwLock.RUnlock()
