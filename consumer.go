@@ -311,6 +311,13 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		} else {
 			body = receiveMsg.MessageBody
 		}
+		if receiveMsg.DequeueCount > dequeueCount {
+			contextLogger.
+				WithField("queue", queue.Name).
+				WithField("body", body).
+				WithField("count", receiveMsg.DequeueCount).
+				Error("The message is dequeued many times.")
+		}
 		m.MessageBody = body
 		m.MessageBodyMD5 = receiveMsg.MessageBodyMD5
 		m.EnqueueTime = receiveMsg.EnqueueTime
@@ -394,15 +401,6 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue, idx int) {
 						contextLogger.WithField("queue", queue.Name).WithField("body", receiveMessage.MessageBody).Warning("Messages are stacked.")
 						continue
 					}
-
-					if receiveMessage.DequeueCount > dequeueCount {
-						contextLogger.
-							WithField("queue", queue.Name).
-							WithField("body", receiveMessage.MessageBody).
-							WithField("count", receiveMessage.DequeueCount).
-							Error("The message is dequeued many times.")
-					}
-
 					queue.statusBits.Set(uint(idx))
 					c.OnReceive(queue, receiveMessage)
 					queue.statusBits.Clear(uint(idx))
