@@ -303,7 +303,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		m := new(M)
 		var body string
 		if IsBase54(receiveMsg.MessageBody) {
-			b64bytes, err := base64.StdEncoding.DecodeString(m.MessageBody)
+			b64bytes, err := base64.StdEncoding.DecodeString(receiveMsg.MessageBody)
 			if err != nil {
 				contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
 			}
