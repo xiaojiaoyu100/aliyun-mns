@@ -90,6 +90,9 @@ func (c *Consumer) AddQueue(q *Queue) {
 	if q.Parallel == 0 {
 		q.Parallel = Parallel()
 	}
+	if q.Parallel > maxReceiveMessage {
+		q.Parallel = maxReceiveMessage
+	}
 	q.receiveMessageChan = make(chan *ReceiveMessage, q.Parallel)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
