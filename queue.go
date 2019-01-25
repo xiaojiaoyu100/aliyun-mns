@@ -6,9 +6,8 @@ import (
 
 // M 消息内容，去掉其它字段是为了不要依赖消息其它字段，应该依赖数据库字段
 type M struct {
-	MessageBody    string
-	MessageBodyMD5 string
-	EnqueueTime    int64
+	MessageBody string
+	EnqueueTime int64
 }
 
 // Handler 消息处理函数模板

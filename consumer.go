@@ -88,16 +88,12 @@ func (c *Consumer) BatchListQueue() error {
 // AddQueue 添加一个消息队列
 func (c *Consumer) AddQueue(q *Queue) {
 	if q.Parallel == 0 {
-		q.Parallel = 1
+		q.Parallel = Parallel()
 	}
-	l := q.Parallel
-	if l > maxReceiveMessage {
-		l = maxReceiveMessage
-	}
-	q.receiveMessageChan = make(chan *ReceiveMessage, l)
+	q.receiveMessageChan = make(chan *ReceiveMessage, q.Parallel)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
-	q.statusBits = bitset.New(uint(l))
+	q.statusBits = bitset.New(uint(q.Parallel))
 	c.queues = append(c.queues, q)
 }
 
@@ -319,7 +315,6 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				Error("The message is dequeued many times.")
 		}
 		m.MessageBody = body
-		m.MessageBodyMD5 = receiveMsg.MessageBodyMD5
 		m.EnqueueTime = receiveMsg.EnqueueTime
 		errChan <- queue.OnReceive(m)
 	}()
@@ -382,12 +377,11 @@ func TimestampInMs() int64 {
 
 // Parallel 返回并发数
 func Parallel() int {
-	return runtime.NumCPU()
-}
-
-// MaxParallel 返回最大并发数
-func MaxParallel() int {
-	return maxReceiveMessage
+	p := runtime.NumCPU() * 2
+	if p > maxReceiveMessage {
+		return maxReceiveMessage
+	}
+	return p
 }
 
 // ConsumeQueueMessage 消费消息

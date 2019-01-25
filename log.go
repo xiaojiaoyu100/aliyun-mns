@@ -3,23 +3,25 @@ package alimns
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 // LogHook log hook模板
 type LogHook func(...interface{})
 
-var contextLogger = log.WithFields(log.Fields{
+var contextLogger = log.WithFields(logrus.Fields{
 	"source": "alimns",
 })
 
 func init() {
-	log.SetFormatter(&log.JSONFormatter{
+	log.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 	log.SetReportCaller(true)
 	log.SetOutput(os.Stderr)
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(logrus.InfoLevel)
 }
 
 // AddLogHook add a log reporter.
@@ -41,17 +43,17 @@ func NewMonitor(l LogHook) *Monitor {
 }
 
 // Levels 这些级别的日志会被回调
-func (m *Monitor) Levels() []log.Level {
-	return []log.Level{
-		log.PanicLevel,
-		log.FatalLevel,
-		log.ErrorLevel,
-		log.WarnLevel,
+func (m *Monitor) Levels() []logrus.Level {
+	return []logrus.Level{
+		logrus.PanicLevel,
+		logrus.FatalLevel,
+		logrus.ErrorLevel,
+		logrus.WarnLevel,
 	}
 }
 
 // Fire 实际执行了回调
-func (m *Monitor) Fire(entry *log.Entry) error {
+func (m *Monitor) Fire(entry *logrus.Entry) error {
 	line, err := entry.String()
 	if err != nil {
 		return err
