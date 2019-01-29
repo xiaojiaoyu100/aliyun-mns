@@ -9,7 +9,7 @@ import (
 var log = logrus.New()
 
 // LogHook log hook模板
-type LogHook func(...interface{})
+type LogHook func(entry *logrus.Entry)
 
 var contextLogger = log.WithFields(logrus.Fields{
 	"source": "alimns",
@@ -54,10 +54,6 @@ func (m *Monitor) Levels() []logrus.Level {
 
 // Fire 实际执行了回调
 func (m *Monitor) Fire(entry *logrus.Entry) error {
-	line, err := entry.String()
-	if err != nil {
-		return err
-	}
-	m.Callback(line)
+	m.Callback(entry)
 	return nil
 }
