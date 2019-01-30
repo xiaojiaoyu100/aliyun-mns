@@ -19,7 +19,11 @@ import (
 	"github.com/xiaojiaoyu100/aliyun-mns"
 )
 
-func Handle(m *alimns.M) error {
+func Handle1(m *alimns.M) error {
+	return nil
+}
+
+func Handle2(m *alimns.M) error {
 	return nil
 }
 
@@ -28,9 +32,12 @@ func main() {
 	consumer := alimns.NewConsumer(client)
 	consumer.AddQueue(
 		&alimns.Queue{
-			Name: 	"test",
-			Parallel: 2,
-			Handler: Handle,
+			Name: 	"QueueTest1",
+			Handler: Handle1,
+		},
+		&alimns.Queue{
+			Name: 	"QueueTest2",
+			Handler: Handle2,
 		},
 		)
 	consumer.Run()
