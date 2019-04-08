@@ -2,6 +2,7 @@ package alimns
 
 import (
 	"encoding/base64"
+	"math/rand"
 	"os"
 	"os/signal"
 	"runtime"
@@ -161,6 +162,10 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 	return createQueueReady
 }
 
+func randInRange(min, max int) int {
+	return rand.Intn(max-min) + min
+}
+
 // Schedule 使消息队列开始运作起来
 func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 	go func() {
@@ -168,6 +173,8 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 			select {
 			case <-createQueueReady:
 				for _, queue := range c.queues {
+					time.Sleep(time.Duration(randInRange(20, 51)) * time.Millisecond)
+
 					if c.isClosed {
 						continue
 					}
@@ -366,7 +373,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				}
 			}
 		}
-	case <-time.After(5 * time.Hour):
+	case <-time.After(10 * time.Hour):
 		{
 			close(tickerStop)
 		}

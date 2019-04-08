@@ -72,6 +72,11 @@ func IsHandleCrash(err error) bool {
 	return err == handleCrashError
 }
 
+// IsInternalError 是否内部错误
+func IsInternalError(err error) bool {
+	return err == internalError
+}
+
 // RespErr 阿里云回复错误
 type RespErr struct {
 	XMLName   xml.Name `xml:"Error"`

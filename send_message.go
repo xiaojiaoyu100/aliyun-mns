@@ -32,6 +32,9 @@ func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface
 			case shouldRetry(err):
 				time.Sleep(time.Millisecond * 100)
 				continue
+			case IsInternalError(err):
+				time.Sleep(time.Millisecond * 100)
+				continue
 			default:
 				close(ended)
 				return
@@ -129,6 +132,8 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 		switch respErr.Code {
 		case queueNotExistError.Error():
 			return nil, queueNotExistError
+		case internalError.Error():
+			return nil, internalError
 		}
 		return nil, errors.New(respErr.Message)
 	}
