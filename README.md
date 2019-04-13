@@ -32,14 +32,16 @@ func main() {
 	consumer := alimns.NewConsumer(client)
 	consumer.AddQueue(
 		&alimns.Queue{
-			Name: 	"QueueTest1",
-			Handler: Handle1,
+			Name:      "QueueTest1",
+			OnReceive: Handle1,
 		},
+	)
+	consumer.AddQueue(
 		&alimns.Queue{
-			Name: 	"QueueTest2",
-			Handler: Handle2,
+			Name:      "QueueTest2",
+			OnReceive: Handle2,
 		},
-		)
+	)
 	consumer.Run()
 }
 ```
