@@ -32,9 +32,6 @@ func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface
 			case shouldRetry(err):
 				time.Sleep(time.Millisecond * 100)
 				continue
-			case IsInternalError(err):
-				time.Sleep(time.Millisecond * 100)
-				continue
 			default:
 				close(ended)
 				return
