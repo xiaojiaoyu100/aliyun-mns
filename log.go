@@ -21,7 +21,7 @@ func init() {
 	})
 	log.SetReportCaller(true)
 	log.SetOutput(os.Stderr)
-	log.SetLevel(logrus.InfoLevel)
+	log.SetLevel(logrus.WarnLevel)
 }
 
 // AddLogHook add a log reporter.
