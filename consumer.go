@@ -364,6 +364,9 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				// 这里不报警
 			case err != nil:
 				contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("OnReceive")
+				if queue.Backoff != nil {
+					c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
+				}
 			case err == nil:
 				rwLock.RLock()
 				err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)

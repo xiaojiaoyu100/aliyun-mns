@@ -19,6 +19,7 @@ type Queue struct {
 	Parallel              int
 	QueueAttributeSetters []QueueAttributeSetter
 	OnReceive             Handler
+	Backoff               BackoffFunc
 	isScheduled           bool
 	receiveMessageChan    chan *ReceiveMessage
 	longPollQuit          chan struct{}
