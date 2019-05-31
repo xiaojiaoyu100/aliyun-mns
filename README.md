@@ -40,6 +40,7 @@ func main() {
 		&alimns.Queue{
 			Name:      "QueueTest2",
 			OnReceive: Handle2,
+            Backoff:   ExponentialBackoff(60, 3600), // 指数回退，1分钟起始，最长1小时
 		},
 	)
 	consumer.Run()
