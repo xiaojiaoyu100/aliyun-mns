@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"io"
 	"net"
+	"net/url"
 )
 
 // MnsError 错误码
@@ -100,7 +101,8 @@ func isContextCanceled(err error) bool {
 }
 
 func isEOF(err error) bool {
-	return err == io.EOF
+	urlErr, ok := err.(*url.Error)
+	return ok && urlErr.Err == io.EOF
 }
 
 func shouldRetry(err error) bool {
