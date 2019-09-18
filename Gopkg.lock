@@ -10,8 +10,8 @@
 [[projects]]
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
-  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
-  version = "v1.0.1"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -29,7 +29,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
+  revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
 
 [[projects]]
   branch = "master"
@@ -38,7 +38,7 @@
     "unix",
     "windows"
   ]
-  revision = "b4a75ba826a64a70990f11a225237acd6ef35c9f"
+  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
 
 [solve-meta]
   analyzer-name = "dep"

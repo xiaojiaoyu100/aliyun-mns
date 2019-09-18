@@ -4,7 +4,7 @@ package alimns
 type BackoffFunc func(*ReceiveMessage) int
 
 // ExponentialBackoff 指数回退重试
-func ExponentialBackoff(base int, max int) BackoffFunc {
+func ExponentialBackoff(base, max int) BackoffFunc {
 	if base < minVisibilityTimeout {
 		base = minVisibilityTimeout
 	}

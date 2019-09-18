@@ -1,12 +1,9 @@
 package alimns
 
 import (
-	"context"
 	"encoding/xml"
 	"errors"
-	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 // ListQueueRequest 获取队列列表参数
@@ -31,61 +28,35 @@ type ListQueueResponse struct {
 
 // ListQueue 请求队列列表
 func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, c.endpoint+mnsListQueue, nil)
-	if err != nil {
-		return nil, err
-	}
+	var err error
+
+	req := c.ca.NewRequest().Get().WithPath(mnsListQueue).WithTimeout(apiTimeout)
 
 	if request.Marker != "" {
-		req.Header.Set(xMnsMarker, request.Marker)
+		req.SetHeader(xMnsMarker, request.Marker)
 	}
 	if request.RetNumber != "" {
-		req.Header.Set(xMnsRetNumber, request.RetNumber)
+		req.SetHeader(xMnsRetNumber, request.RetNumber)
 	}
 	if request.Prefix != "" {
-		req.Header.Set(xMnxPrefix, request.Prefix)
+		req.SetHeader(xMnxPrefix, request.Prefix)
 	}
 
-	c.finalizeHeader(req, nil)
-
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		Info("获取队列列表请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("获取队列列表回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusOK:
-		response := new(ListQueueResponse)
-		if err := xml.Unmarshal(body, &response); err != nil {
+		var response ListQueueResponse
+		if err := resp.DecodeFromXML(&response); err != nil {
 			return nil, err
 		}
-		return response, nil
+		return &response, nil
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		if err := resp.DecodeFromXML(&respErr); err != nil {
 			return nil, err
 		}
 		return nil, errors.New(respErr.Code)

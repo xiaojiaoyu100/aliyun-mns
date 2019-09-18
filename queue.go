@@ -1,7 +1,7 @@
 package alimns
 
 import (
-	"github.com/willf/bitset"
+	"github.com/xiaojiaoyu100/curlew"
 )
 
 // M 消息内容，去掉其它字段是为了不要依赖消息其它字段，应该依赖数据库字段
@@ -24,7 +24,7 @@ type Queue struct {
 	receiveMessageChan    chan *ReceiveMessage
 	longPollQuit          chan struct{}
 	consumeQuit           chan struct{}
-	statusBits            *bitset.BitSet
+	dispatcher            *curlew.Dispatcher
 }
 
 // Stop 使消息队列拉取消息和消费消息停止

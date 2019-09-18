@@ -1,14 +1,11 @@
 package alimns
 
 import (
-	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 // ChangeVisibilityTimeoutResponse 修改消息可见时长回复
@@ -20,57 +17,34 @@ type ChangeVisibilityTimeoutResponse struct {
 }
 
 // ChangeVisibilityTimeout 修改消息可见时长
-func (c *Client) ChangeVisibilityTimeout(name string, receiptHandle string, visibilityTimeout int) (*ChangeVisibilityTimeoutResponse, error) {
+func (c *Client) ChangeVisibilityTimeout(
+	name,
+	receiptHandle string,
+	visibilityTimeout int) (*ChangeVisibilityTimeoutResponse, error) {
+
+	var err error
 	if visibilityTimeout < minVisibilityTimeout || visibilityTimeout > maxVisibilityTimeout {
 		return nil, visibilityTimeoutError
 	}
 
 	requestLine := fmt.Sprintf(mnsChangeMessageVisibility, name, receiptHandle, strconv.Itoa(visibilityTimeout))
-	req, err := http.NewRequest(http.MethodPut, c.endpoint+requestLine, nil)
+	req := c.ca.NewRequest().Put().WithPath(requestLine).WithTimeout(apiTimeout)
+
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	c.finalizeHeader(req, nil)
-
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		Info("修改消息可见时间请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("修改消息可见时间回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusOK:
 		var changeVisibilityTimeoutResponse ChangeVisibilityTimeoutResponse
-		if err := xml.Unmarshal(body, &changeVisibilityTimeoutResponse); err != nil {
+		if err := resp.DecodeFromXML(&changeVisibilityTimeoutResponse); err != nil {
 			return nil, err
 		}
 		return &changeVisibilityTimeoutResponse, nil
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		if err := resp.DecodeFromXML(&respErr); err != nil {
 			return nil, err
 		}
 		switch respErr.Code {

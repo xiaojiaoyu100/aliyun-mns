@@ -1,15 +1,10 @@
 package alimns
 
 import (
-	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"time"
-
-	"github.com/google/go-querystring/query"
 )
 
 // ReceiveMessage 收到消息
@@ -76,65 +71,33 @@ func WithReceiveMessageNumOfMessages(num int) ReceiveMessageParamSetter {
 
 // ReceiveMessage 接收消息
 func (c *Client) ReceiveMessage(name string, setters ...ReceiveMessageParamSetter) (*ReceiveMessageResponse, error) {
-
+	var err error
 	receiveMessage := DefaultReceiveMessage()
 	for _, setter := range setters {
-		if err := setter(&receiveMessage); err != nil {
+		err = setter(&receiveMessage)
+		if err != nil {
 			return nil, err
 		}
 	}
 
 	requestLine := fmt.Sprintf(mnsReceiveMessage, name)
-	req, err := http.NewRequest(http.MethodGet, c.endpoint+requestLine, nil)
-	if err != nil {
-		return nil, err
-	}
-	values, err := query.Values(&receiveMessage)
-	if err != nil {
-		return nil, err
-	}
-	req.URL.RawQuery = values.Encode()
+	req := c.ca.NewRequest().Get().WithPath(requestLine).WithQueryParam(&receiveMessage)
 
-	c.finalizeHeader(req, nil)
-
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		Info("消费消息请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("消费消息回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusOK:
 		var receiveMessageResponse ReceiveMessageResponse
-		if err := xml.Unmarshal(body, &receiveMessageResponse); err != nil {
+		if err := resp.DecodeFromXML(&receiveMessageResponse); err != nil {
 			return nil, err
 		}
 		return &receiveMessageResponse, nil
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		if err := resp.DecodeFromXML(&respErr); err != nil {
 			return nil, err
 		}
 		return nil, errors.New(respErr.Code)

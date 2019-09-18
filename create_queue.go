@@ -1,15 +1,10 @@
 package alimns
 
 import (
-	"bytes"
-	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
-	"time"
 )
 
 func checkQueueName(name string) bool {
@@ -19,61 +14,31 @@ func checkQueueName(name string) bool {
 
 // CreateQueue 创建一个消息队列
 func (c *Client) CreateQueue(name string, setters ...QueueAttributeSetter) (string, error) {
+	var err error
+
 	if !checkQueueName(name) {
 		return "", errors.New("unqualified queue name")
 	}
 
 	attri := DefaultQueueAttri()
 	for _, setter := range setters {
-		if err := setter(&attri); err != nil {
+		err = setter(&attri)
+		if err != nil {
 			return "", err
 		}
 	}
 
-	body, err := xml.Marshal(&attri)
-	if err != nil {
-		return "", err
-	}
-
 	requestLine := fmt.Sprintf(mnsCreateQueue, name)
-	req, err := http.NewRequest(http.MethodPut, c.endpoint+requestLine, bytes.NewBuffer(body))
-	if err != nil {
-		return "", err
-	}
-	c.finalizeHeader(req, body)
+	req := c.ca.NewRequest().Put().WithPath(requestLine).WithXMLBody(&attri).WithTimeout(apiTimeout)
 
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		WithField("body", string(body)).
-		Info("创建队列请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, err = ioutil.ReadAll(resp.Body)
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return "", err
 	}
 
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("创建队列回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusCreated:
-		return resp.Header.Get(location), nil
+		return resp.Header().Get(location), nil
 	case http.StatusNoContent:
 		return "", createQueueNoContentError
 	case http.StatusConflict:

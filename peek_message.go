@@ -1,13 +1,9 @@
 package alimns
 
 import (
-	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 // PeekMessage 查看消息
@@ -28,52 +24,28 @@ type PeekMessageResponse struct {
 
 // PeekMessage 查看消息
 func (c *Client) PeekMessage(name string) (*PeekMessageResponse, error) {
+	var err error
+
 	requestLine := fmt.Sprintf(mnsPeekMessage, name)
-	req, err := http.NewRequest(http.MethodGet, c.endpoint+requestLine, nil)
+	req := c.ca.NewRequest().Get().WithPath(requestLine).WithTimeout(apiTimeout)
+
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	c.finalizeHeader(req, nil)
-
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		Info("查看消息请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("查看消息回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusOK:
 		var peekMessageResponse PeekMessageResponse
-		if err := xml.Unmarshal(body, &peekMessageResponse); err != nil {
+		err = resp.DecodeFromXML(&peekMessageResponse)
+		if err != nil {
 			return nil, err
 		}
 		return &peekMessageResponse, nil
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		err = resp.DecodeFromXML(&respErr)
+		if err != nil {
 			return nil, err
 		}
 		return nil, errors.New(respErr.Code)

@@ -13,7 +13,9 @@ func TestCheckQueueName(t *testing.T) {
 			Want: false,
 		},
 		1: {
-			Name: "w8hEny8a77VmUeOSj2IV1HiCsgbwjHdMviMsWrePDEUkt56QNJ7appr6itwJx4v3j8AUpCvbbyyNPcjgEYfhnSS0ZajuNo54YgIvYCTBHJ0fZnV0LNkDVR4ovi0639i6cNW4rwJER8r2de2buUj2Zmn8U623mX9GRTqwqhqS4KxZvU90lDwtIOOE8XjZbLFYEVfm8tQDvBOumDJffufSZaLmeQOTZ5fHxCtY6aZPzUvHmQawSsLvnVOchE8mlEHCO",
+			Name: `w8hEny8a77VmUeOSj2IV1HiCsgbwjHdMviMsWrePDEUkt56QNJ7appr6itwJx4v3j8AUpCvbbyyNPcjgEYfhnSS0ZajuNo54
+				YgIvYCTBHJ0fZnV0LNkDVR4ovi0639i6cNW4rwJER8r2de2buUj2Zmn8U623mX9GRTqwqhqS4KxZvU90lDwtIOOE8XjZbLFYEVfm8
+				tQDvBOumDJffufSZaLmeQOTZ5fHxCtY6aZPzUvHmQawSsLvnVOchE8mlEHCO`,
 			Want: false,
 		},
 		2: {

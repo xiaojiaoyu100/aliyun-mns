@@ -1,12 +1,9 @@
 package alimns
 
 import (
-	"bytes"
-	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -39,6 +36,7 @@ func (c *Client) BatchSendMessage(name string, messageList ...*Message) (*BatchS
 		try            = 0
 		sendedMessages = make([]*SendMessage, len(messageList))
 		roundIndexList []int
+		err            error
 	)
 
 	originalMessageList := messageList
@@ -48,52 +46,26 @@ func (c *Client) BatchSendMessage(name string, messageList ...*Message) (*BatchS
 	}
 
 start:
-	body, err := xml.Marshal(&messageList)
-	if err != nil {
-		return nil, err
-	}
 	requestLine := fmt.Sprintf(mnsBatchSendMessage, name)
-	req, err := http.NewRequest(http.MethodPost, c.endpoint+requestLine, bytes.NewBuffer(body))
+	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&messageList).WithTimeout(apiTimeout)
+
+	body, err := req.ReqBody()
 	if err != nil {
 		return nil, err
 	}
-	c.finalizeHeader(req, body)
 
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		WithField("body", string(body)).
-		Info("批量发送消息请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	try++
-	defer resp.Body.Close()
 
-	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("批量发送消息回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusCreated,
 		http.StatusInternalServerError:
 		var batchSendMessageResponse BatchSendMessageResponse
-		if err := xml.Unmarshal(body, &batchSendMessageResponse); err != nil {
+		err = resp.DecodeFromXML(&batchSendMessageResponse)
+		if err != nil {
 			return nil, err
 		}
 		var retryIdx []int
@@ -106,10 +78,7 @@ start:
 			case internalError.Error():
 				retryIdx = append(retryIdx, idx)
 			default:
-				contextLogger.
-					WithField("err", err).
-					WithField("body", string(body)).
-					Error("批量发送消息部分失败")
+				c.log.WithField("err", err).WithField("body", string(body)).Error("批量发送消息部分失败")
 			}
 		}
 		if len(retryIdx) == 0 {
@@ -135,7 +104,7 @@ start:
 
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		if err := resp.DecodeFromXML(&respErr); err != nil {
 			return nil, err
 		}
 		return nil, errors.New(respErr.Message)

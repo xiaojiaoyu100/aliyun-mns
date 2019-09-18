@@ -1,14 +1,10 @@
 package alimns
 
 import (
-	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -19,7 +15,8 @@ type SendMessageResponse struct {
 }
 
 // SendBase64EncodedJSONMessage 发送base64编码的json消息
-func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
+func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface{},
+	setters ...MessageSetter) (*SendMessageResponse, error) {
 	var (
 		resp *SendMessageResponse
 		err  error
@@ -51,79 +48,50 @@ func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, set
 	if err != nil {
 		return nil, err
 	}
-	contextLogger.WithField("queue", name).WithField("body", body).Info("sendBase64EncodedJSONMessage")
+	c.log.WithField("queue", name).WithField("body", body).Info("sendBase64EncodedJSONMessage")
 	b64Body := base64.StdEncoding.EncodeToString(b)
-	contextLogger.WithField("queue", name).WithField("b64body", b64Body).Info("sendBase64EncodedJSONMessage")
+	c.log.WithField("queue", name).WithField("b64body", b64Body).Info("sendBase64EncodedJSONMessage")
 	resp, err := c.sendMessage(name, b64Body, setters...)
 	if err != nil {
-		contextLogger.WithField("queue", name).WithError(err).WithField("body", body).Error("sendBase64EncodedJSONMessage")
+		c.log.WithField("queue", name).WithError(err).WithField("body", body).Error("sendBase64EncodedJSONMessage")
 	}
 	return resp, err
 }
 
 func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter) (*SendMessageResponse, error) {
+	var err error
+
 	if len(messageBody) > maxMessageSize {
 		return nil, messageBodyLimitError
 	}
+
 	attri := DefaultMessage()
 	attri.MessageBody = messageBody
 	for _, setter := range setters {
-		if err := setter(&attri); err != nil {
+		err = setter(&attri)
+		if err != nil {
 			return nil, err
 		}
 	}
 
-	body, err := xml.Marshal(&attri)
-	if err != nil {
-		return nil, err
-	}
-
 	requestLine := fmt.Sprintf(mnsSendMessage, name)
-	req, err := http.NewRequest(http.MethodPost, c.endpoint+requestLine, bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-	c.finalizeHeader(req, body)
+	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&attri)
 
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		WithField("body", string(body)).
-		Info("发送消息请求")
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	_ = time.AfterFunc(time.Second*timeout, func() {
-		cancel()
-	})
-	req = req.WithContext(ctx)
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err = ioutil.ReadAll(resp.Body)
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("发送消息回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusCreated:
 		var sendMessageResponse SendMessageResponse
-		if err := xml.Unmarshal(body, &sendMessageResponse); err != nil {
+		if err := resp.DecodeFromXML(&sendMessageResponse); err != nil {
 			return nil, err
 		}
 		return &sendMessageResponse, nil
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		if err := resp.DecodeFromXML(&respErr); err != nil {
 			return nil, err
 		}
 		switch respErr.Code {

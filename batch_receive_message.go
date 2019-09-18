@@ -4,10 +4,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-
-	"github.com/google/go-querystring/query"
 )
 
 // BatchReceiveMessageResponse 批量消費消息
@@ -26,58 +23,34 @@ func DefaultBatchReceiveMessage() ReceiveMessageParam {
 
 // BatchReceiveMessage 批量消费消息
 func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParamSetter) (*BatchReceiveMessageResponse, error) {
+	var err error
+
 	receiveMessage := DefaultBatchReceiveMessage()
 	for _, setter := range setters {
-		if err := setter(&receiveMessage); err != nil {
+		err = setter(&receiveMessage)
+		if err != nil {
 			return nil, err
 		}
 	}
 
 	requestLine := fmt.Sprintf(mnsBatchReceiveMessage, name)
-	req, err := http.NewRequest(http.MethodGet, c.endpoint+requestLine, nil)
-	if err != nil {
-		return nil, err
-	}
-	values, err := query.Values(&receiveMessage)
-	if err != nil {
-		return nil, err
-	}
-	req.URL.RawQuery = values.Encode()
+	req := c.ca.NewRequest().Get().WithPath(requestLine).WithQueryParam(&receiveMessage)
 
-	c.finalizeHeader(req, nil)
-
-	contextLogger.
-		WithField("method", req.Method).
-		WithField("url", req.URL.String()).
-		Info("批量消费消息请求")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
+	resp, err := c.ca.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	contextLogger.
-		WithField("status", resp.Status).
-		WithField("body", string(body)).
-		WithField("url", req.URL.String()).
-		Info("批量消费消息回复")
-
-	switch resp.StatusCode {
+	switch resp.StatusCode() {
 	case http.StatusOK:
 		var batchReceiveMessageResponse BatchReceiveMessageResponse
-		if err := xml.Unmarshal(body, &batchReceiveMessageResponse); err != nil {
+		if err := resp.DecodeFromXML(&batchReceiveMessageResponse); err != nil {
 			return nil, err
 		}
 		return &batchReceiveMessageResponse, nil
 	default:
 		var respErr RespErr
-		if err := xml.Unmarshal(body, &respErr); err != nil {
+		if err := resp.DecodeFromXML(&respErr); err != nil {
 			return nil, err
 		}
 

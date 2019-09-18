@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/base64"
 	"math/rand"
 	"os"
@@ -8,10 +9,11 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/willf/bitset"
+	"github.com/xiaojiaoyu100/curlew"
 )
 
 const (
@@ -20,15 +22,16 @@ const (
 
 // Consumer 消费者
 type Consumer struct {
-	Client
+	*Client
 	queues     []*Queue
 	doneQueues map[string]struct{}
 	shutdown   chan struct{}
 	isClosed   bool
+	runningNum int32
 }
 
 // NewConsumer 生成了一个消费者
-func NewConsumer(client Client) *Consumer {
+func NewConsumer(client *Client) *Consumer {
 	consumer := new(Consumer)
 	consumer.Client = client
 	consumer.queues = make([]*Queue, 0)
@@ -86,44 +89,64 @@ func (c *Consumer) BatchListQueue() error {
 	}
 }
 
+func setParallel(parallel int) int {
+	if parallel > maxReceiveMessage {
+		return maxReceiveMessage
+	}
+	if parallel == 0 {
+		p :=  Parallel()
+		if p < maxReceiveMessage {
+			return p
+		}
+		return maxReceiveMessage
+	}
+	return parallel
+}
+
 // AddQueue 添加一个消息队列
-func (c *Consumer) AddQueue(q *Queue) {
-	if q.Parallel == 0 {
-		q.Parallel = Parallel()
-	}
-	if q.Parallel > maxReceiveMessage {
-		q.Parallel = maxReceiveMessage
-	}
-	q.receiveMessageChan = make(chan *ReceiveMessage, q.Parallel)
+func (c *Consumer) AddQueue(q *Queue) error {
+	var err error
+	q.Parallel = setParallel(q.Parallel)
+	q.receiveMessageChan = make(chan *ReceiveMessage)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
-	q.statusBits = bitset.New(uint(q.Parallel))
+
+	monitor := func(e error) {
+		c.log.WithError(err).Warning("curlew")
+	}
+
+	q.dispatcher, err = curlew.New(
+		curlew.WithMaxWorkerNum(q.Parallel),
+		curlew.WithJobSize(q.Parallel),
+		curlew.WithMonitor(monitor),
+	)
+	if err != nil {
+		return err
+	}
 	c.queues = append(c.queues, q)
+	return nil
 }
 
 // PeriodicallyFetchQueues 周期性拉取消息队列与内存的消息队列做比较
 func (c *Consumer) PeriodicallyFetchQueues() chan struct{} {
 	fetchQueueReady := make(chan struct{})
-	ticker := time.Tick(time.Minute * 3)
+	ticker := time.NewTicker(time.Minute * 3)
 
 	go func() {
 		err := c.BatchListQueue()
 		if err != nil {
-			contextLogger.WithField("err", err).Info("BatchListQueue")
+			c.log.WithError(err).Info("BatchListQueue")
 		} else {
 			fetchQueueReady <- struct{}{}
 		}
 
-		for {
-			select {
-			case <-ticker:
-				err := c.BatchListQueue()
-				if err != nil {
-					contextLogger.WithField("err", err).Info("BatchListQueue")
-					continue
-				} else {
-					fetchQueueReady <- struct{}{}
-				}
+		for range ticker.C {
+			err := c.BatchListQueue()
+			if err != nil {
+				c.log.WithError(err).Info("BatchListQueue")
+				continue
+			} else {
+				fetchQueueReady <- struct{}{}
 			}
 		}
 	}()
@@ -135,27 +158,23 @@ func (c *Consumer) PeriodicallyFetchQueues() chan struct{} {
 func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} {
 	createQueueReady := make(chan struct{})
 	go func() {
-		for {
-			select {
-			case <-fetchQueueReady:
-				for _, queue := range c.queues {
-					if _, ok := c.doneQueues[queue.Name]; ok {
-						continue
-					}
-
-					queue.Stop()
-
-					_, err := c.CreateQueue(queue.Name, queue.QueueAttributeSetters...)
-					switch err {
-					case nil:
-						continue
-					case createQueueConflictError, unknownError:
-						contextLogger.WithField("err", err).Warn("CreateQueue")
-					}
+		for range fetchQueueReady {
+			for _, queue := range c.queues {
+				if _, ok := c.doneQueues[queue.Name]; ok {
+					continue
 				}
 
-				createQueueReady <- struct{}{}
+				queue.Stop()
+
+				_, err := c.CreateQueue(queue.Name, queue.QueueAttributeSetters...)
+				switch err {
+				case nil:
+					continue
+				case createQueueConflictError, unknownError:
+					c.log.WithField("err", err).Warn("CreateQueue")
+				}
 			}
+			createQueueReady <- struct{}{}
 		}
 	}()
 
@@ -169,36 +188,31 @@ func randInRange(min, max int) int {
 // Schedule 使消息队列开始运作起来
 func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 	go func() {
-		for {
-			select {
-			case <-createQueueReady:
-				for _, queue := range c.queues {
-					time.Sleep(time.Duration(randInRange(20, 51)) * time.Millisecond)
+		for range createQueueReady {
+			for _, queue := range c.queues {
+				time.Sleep(time.Duration(randInRange(20, 51)) * time.Millisecond)
 
-					if c.isClosed {
-						continue
-					}
-
-					if queue.isScheduled {
-						continue
-					}
-
-					if queue.Parallel <= 0 {
-						continue
-					}
-
-					if queue.OnReceive == nil {
-						continue
-					}
-
-					queue.isScheduled = true
-
-					c.LongPollQueueMessage(queue)
-
-					for i := 1; i <= queue.Parallel; i++ {
-						c.ConsumeQueueMessage(queue, i)
-					}
+				if c.isClosed {
+					continue
 				}
+
+				if queue.isScheduled {
+					continue
+				}
+
+				if queue.Parallel <= 0 {
+					continue
+				}
+
+				if queue.OnReceive == nil {
+					continue
+				}
+
+				queue.isScheduled = true
+
+				c.LongPollQueueMessage(queue)
+				c.ConsumeQueueMessage(queue)
+
 			}
 		}
 	}()
@@ -210,27 +224,20 @@ func (c *Consumer) Run() {
 	createQueueReady := c.CreateQueueList(fetchQueueReady)
 	c.Schedule(createQueueReady)
 	c.gracefulShutdown()
-	select {
-	case <-c.shutdown:
-		contextLogger.Info("Consumer is closed!")
-		return
-	}
+	<-c.shutdown
+	c.log.Info("Consumer is closed!")
 }
 
-func (c *Consumer) popCount() uint {
-	popCount := uint(0)
-	for _, queue := range c.queues {
-		popCount += queue.statusBits.Count()
-	}
-	return popCount
+func (c *Consumer) popCount() int32 {
+	return c.runningNum
 }
 
 func (c *Consumer) gracefulShutdown() {
 	gracefulStop := make(chan os.Signal)
-	signal.Notify(gracefulStop, os.Kill, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(gracefulStop, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-gracefulStop
-		contextLogger.WithField("signal", sig.String()).Info("Accepting an os signal...")
+		c.log.WithField("signal", sig.String()).Info("Accepting an os signal...")
 
 		c.isClosed = true
 		for _, queue := range c.queues {
@@ -243,14 +250,14 @@ func (c *Consumer) gracefulShutdown() {
 		for {
 			select {
 			case <-doom.C:
-				contextLogger.WithField("count", c.popCount()).Info("timeout shutdown")
+				c.log.WithField("count", c.popCount()).Info("timeout shutdown")
 				close(c.shutdown)
 				return
 			case <-check.C:
 				popCount := c.popCount()
-				contextLogger.WithField("count", popCount).Info("check")
+				c.log.WithField("count", popCount).Info("check")
 				if popCount == 0 {
-					contextLogger.Info("graceful shutdown")
+					c.log.Info("graceful shutdown")
 					close(c.shutdown)
 					return
 				}
@@ -265,7 +272,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 		for {
 			select {
 			case <-queue.longPollQuit:
-				contextLogger.WithField("queue", queue.Name).Info("long poll quit")
+				c.log.WithField("queue", queue.Name).Info("long poll quit")
 				return
 			default:
 				time.Sleep(50 * time.Millisecond)
@@ -279,7 +286,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 					queue.Stop()
 					fallthrough
 				default:
-					contextLogger.WithField("err", err).Warn("BatchReceiveMessage")
+					c.log.WithField("err", err).Warn("BatchReceiveMessage")
 					continue
 				}
 
@@ -302,7 +309,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	go func() {
 		defer func() {
 			if p := recover(); p != nil {
-				contextLogger.WithField("err", p).WithField("queue", queue.Name).Error("消息处理函数崩溃")
+				c.log.WithField("err", p).WithField("queue", queue.Name).Error("消息处理函数崩溃")
 				errChan <- handleCrashError
 			}
 		}()
@@ -311,14 +318,14 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		if IsBase54(receiveMsg.MessageBody) {
 			b64bytes, err := base64.StdEncoding.DecodeString(receiveMsg.MessageBody)
 			if err != nil {
-				contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
+				c.log.WithField("err", err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
 			}
 			body = string(b64bytes)
 		} else {
 			body = receiveMsg.MessageBody
 		}
 		if receiveMsg.DequeueCount > dequeueCount {
-			contextLogger.
+			c.log.
 				WithField("queue", queue.Name).
 				WithField("body", body).
 				WithField("count", receiveMsg.DequeueCount).
@@ -336,17 +343,15 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, defaultVisibilityTimeout)
 				switch {
 				case err == nil:
-					{
-						rwLock.Lock()
-						receiveMsg.ReceiptHandle = resp.ReceiptHandle
-						receiveMsg.NextVisibleTime = resp.NextVisibleTime
-						rwLock.Unlock()
-					}
+					rwLock.Lock()
+					receiveMsg.ReceiptHandle = resp.ReceiptHandle
+					receiveMsg.NextVisibleTime = resp.NextVisibleTime
+					rwLock.Unlock()
 				case err == messageNotExistError, err == queueNotExistError:
 					ticker.Stop()
 					return
 				default:
-					contextLogger.WithField("err", err).WithField("queue", queue.Name).Info("ChangeVisibilityTimeout")
+					c.log.WithError(err).WithField("queue", queue.Name).Info("ChangeVisibilityTimeout")
 				}
 			case <-tickerStop:
 				ticker.Stop()
@@ -357,29 +362,28 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 
 	select {
 	case err := <-errChan:
-		{
-			close(tickerStop)
-			switch {
-			case IsHandleCrash(err):
-				// 这里不报警
-			case err != nil:
-				contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("OnReceive")
-				if queue.Backoff != nil {
-					c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
-				}
-			case err == nil:
-				rwLock.RLock()
-				err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
-				rwLock.RUnlock()
+		close(tickerStop)
+		switch {
+		case IsHandleCrash(err):
+			// 这里不报警
+		case err != nil:
+			c.log.WithField("err", err).WithField("queue", queue.Name).Error("OnReceive")
+			if queue.Backoff != nil {
+				_, err = c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
 				if err != nil {
-					contextLogger.WithField("err", err).WithField("queue", queue.Name).Error("DeleteMessage")
+					c.log.WithError(err).WithField("queue", queue.Name).Info("ChangeVisibilityTimeout")
 				}
+			}
+		default:
+			rwLock.RLock()
+			err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
+			rwLock.RUnlock()
+			if err != nil {
+				c.log.WithField("err", err).WithField("queue", queue.Name).Error("DeleteMessage")
 			}
 		}
 	case <-time.After(10 * time.Hour):
-		{
-			close(tickerStop)
-		}
+		close(tickerStop)
 	}
 }
 
@@ -398,25 +402,31 @@ func Parallel() int {
 }
 
 // ConsumeQueueMessage 消费消息
-func (c *Consumer) ConsumeQueueMessage(queue *Queue, idx int) {
+func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 	go func() {
 		for {
 			select {
 			case receiveMessage := <-queue.receiveMessageChan:
 				{
 					if receiveMessage.NextVisibleTime < TimestampInMs() {
-						contextLogger.WithField("queue", queue.Name).WithField("body", receiveMessage.MessageBody).Warning("Messages are stacked.")
+						c.log.WithField("queue", queue.Name).WithField("body", receiveMessage.MessageBody).Warning("Messages are stacked.")
 						continue
 					}
-					queue.statusBits.Set(uint(idx))
-					c.OnReceive(queue, receiveMessage)
-					queue.statusBits.Clear(uint(idx))
+
+					j := curlew.NewJob()
+					j.Arg = receiveMessage
+					j.Fn = func(ctx context.Context, arg interface{}) error {
+						rm := arg.(*ReceiveMessage)
+						atomic.AddInt32(&c.runningNum, 1)
+						c.OnReceive(queue, rm)
+						atomic.AddInt32(&c.runningNum, -1)
+						return nil
+					}
+					queue.dispatcher.SubmitAsync(j)
 				}
 			case <-queue.consumeQuit:
-				{
-					contextLogger.WithField("queue", queue.Name).Info("Consumer quit")
-					return
-				}
+				c.log.WithField("queue", queue.Name).Info("Consumer quit")
+				return
 			}
 		}
 	}()
