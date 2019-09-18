@@ -30,7 +30,7 @@ type ReceiveMessageResponse struct {
 // ReceiveMessageParam 收到消息请求
 type ReceiveMessageParam struct {
 	WaitSeconds   *int `url:"waitseconds,omitempty"`
-	NumOfMessages int  `url:"numOfMessages"`
+	NumOfMessages int  `url:"numOfMessages,omitempty"`
 }
 
 // DefaultReceiveMessage 默认的收到消息请求参数

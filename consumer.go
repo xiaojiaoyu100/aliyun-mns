@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	changeVisibilityInterval = 5
+	changeVisibilityInterval = 5 * time.Second
 )
 
 // Consumer 消费者
@@ -94,7 +94,7 @@ func setParallel(parallel int) int {
 		return maxReceiveMessage
 	}
 	if parallel == 0 {
-		p :=  Parallel()
+		p := Parallel()
 		if p < maxReceiveMessage {
 			return p
 		}
@@ -171,7 +171,7 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 				case nil:
 					continue
 				case createQueueConflictError, unknownError:
-					c.log.WithField("err", err).Warn("CreateQueue")
+					c.log.WithError(err).Warn("CreateQueue")
 				}
 			}
 			createQueueReady <- struct{}{}
@@ -286,7 +286,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 					queue.Stop()
 					fallthrough
 				default:
-					c.log.WithField("err", err).Warn("BatchReceiveMessage")
+					c.log.WithError(err).Warn("BatchReceiveMessage")
 					continue
 				}
 
@@ -301,7 +301,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 // OnReceive 消息队列处理函数
 func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	errChan := make(chan error)
-	ticker := time.NewTicker(time.Second * changeVisibilityInterval)
+	ticker := time.NewTicker(changeVisibilityInterval)
 	tickerStop := make(chan struct{})
 
 	rwLock := sync.RWMutex{}
@@ -318,7 +318,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		if IsBase54(receiveMsg.MessageBody) {
 			b64bytes, err := base64.StdEncoding.DecodeString(receiveMsg.MessageBody)
 			if err != nil {
-				c.log.WithField("err", err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
+				c.log.WithError(err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
 			}
 			body = string(b64bytes)
 		} else {
@@ -367,7 +367,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		case IsHandleCrash(err):
 			// 这里不报警
 		case err != nil:
-			c.log.WithField("err", err).WithField("queue", queue.Name).Error("OnReceive")
+			c.log.WithError(err).WithField("queue", queue.Name).Error("OnReceive")
 			if queue.Backoff != nil {
 				_, err = c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
 				if err != nil {
@@ -379,7 +379,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
 			rwLock.RUnlock()
 			if err != nil {
-				c.log.WithField("err", err).WithField("queue", queue.Name).Error("DeleteMessage")
+				c.log.WithError(err).WithField("queue", queue.Name).Error("DeleteMessage")
 			}
 		}
 	case <-time.After(10 * time.Hour):

@@ -7,25 +7,25 @@ func TestParallel(t *testing.T) {
 }
 
 func TestSetParallel(t *testing.T) {
-	tests := []struct{
-		In int
+	tests := []struct {
+		In  int
 		Out int
 	}{
 		{
-			      1,
-				1,
+			1,
+			1,
 		},
 		{
 			8,
 			8,
 		},
 		{
-				16,
-				16,
+			16,
+			16,
 		},
 		{
-				17,
-				16,
+			17,
+			16,
 		},
 	}
 
