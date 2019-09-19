@@ -331,6 +331,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				WithField("count", receiveMsg.DequeueCount).
 				Error("The message is dequeued many times.")
 		}
+		m.QueueName = queue.Name
 		m.MessageBody = body
 		m.EnqueueTime = receiveMsg.EnqueueTime
 		errChan <- queue.OnReceive(m)
