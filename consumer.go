@@ -228,7 +228,7 @@ func (c *Consumer) Run() {
 	c.log.Info("Consumer is closed!")
 }
 
-func (c *Consumer) popCount() int32 {
+func (c *Consumer) PopCount() int32 {
 	return c.runningNum
 }
 
@@ -250,11 +250,11 @@ func (c *Consumer) gracefulShutdown() {
 		for {
 			select {
 			case <-doom.C:
-				c.log.WithField("count", c.popCount()).Info("timeout shutdown")
+				c.log.WithField("count", c.PopCount()).Info("timeout shutdown")
 				close(c.shutdown)
 				return
 			case <-check.C:
-				popCount := c.popCount()
+				popCount := c.PopCount()
 				c.log.WithField("count", popCount).Info("check")
 				if popCount == 0 {
 					c.log.Info("graceful shutdown")

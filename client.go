@@ -31,7 +31,7 @@ func NewClient(endpoint, accessKeyID, accessKeySecret string) (*Client, error) {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 	log.SetReportCaller(true)
-	log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
 	log.SetLevel(logrus.InfoLevel)
 
 	c, err := cast.New(
