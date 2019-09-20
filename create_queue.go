@@ -39,11 +39,20 @@ func (c *Client) CreateQueue(name string, setters ...QueueAttributeSetter) (stri
 	switch resp.StatusCode() {
 	case http.StatusCreated:
 		return resp.Header().Get(location), nil
-	case http.StatusNoContent:
-		return "", createQueueNoContentError
-	case http.StatusConflict:
-		return "", createQueueConflictError
 	default:
-		return "", unknownError
+		var respErr RespErr
+		if err := resp.DecodeFromXML(&respErr); err != nil {
+			return "", nil
+		}
+		switch respErr.Code {
+		case createQueueNoContentError.Error():
+			return "", createQueueNoContentError
+		case createQueueConflictError.Error():
+			return "", createQueueConflictError
+		case queueNumExceededLimitError.Error():
+			return "", queueNumExceededLimitError
+		default:
+			return "", errors.New(respErr.Code)
+		}
 	}
 }

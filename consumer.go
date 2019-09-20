@@ -423,7 +423,7 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 						atomic.AddInt32(&c.runningNum, -1)
 						return nil
 					}
-					queue.dispatcher.SubmitAsync(j)
+					queue.dispatcher.Submit(j)
 				}
 			case <-queue.consumeQuit:
 				c.log.WithField("queue", queue.Name).Info("Consumer quit")

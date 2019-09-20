@@ -27,6 +27,7 @@ const (
 	batchSendMessageTryLimitError      = MnsError("BatchSendMessageTryLimit")
 	batchSendMessageNumLimitError      = MnsError("BatchSendMessageNumLimit")
 	handleCrashError                   = MnsError("handleCrash")
+	queueNumExceededLimitError         = MnsError("QueueNumExceededLimit")
 )
 
 // aliyun mns error code
