@@ -2,9 +2,26 @@
 
 
 [[projects]]
+  name = "github.com/cep21/circuit"
+  packages = [
+    ".",
+    "closers/hystrix",
+    "faststats",
+    "internal/evar"
+  ]
+  revision = "9acd688e705c9ff330ef0ec354c801bade149b92"
+  version = "v2.4.2"
+
+[[projects]]
   name = "github.com/google/go-querystring"
   packages = ["query"]
   revision = "44c6ddd0a2342c386950e880b658017258da92fc"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/jtacoma/uritemplates"
+  packages = ["."]
+  revision = "307ae868f90f4ee1b73ebe4596e0394237dacce8"
   version = "v1.0.0"
 
 [[projects]]
@@ -20,16 +37,22 @@
   version = "v1.3.0"
 
 [[projects]]
-  name = "github.com/willf/bitset"
+  name = "github.com/xiaojiaoyu100/cast"
   packages = ["."]
-  revision = "e553b05586428962bf7058d1044519d87ca72d74"
-  version = "v1.1.9"
+  revision = "496630e19bf93121ce87c00a502283dccaf40cd0"
+  version = "v1.2.5"
+
+[[projects]]
+  name = "github.com/xiaojiaoyu100/curlew"
+  packages = ["."]
+  revision = "9f2f8f02eb2d6e4e1d50852cd6392a4db6944676"
+  version = "v0.2.0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
+  revision = "227b76d455e791cb042b03e633e2f7fbcfdf74a5"
 
 [[projects]]
   branch = "master"
@@ -38,11 +61,11 @@
     "unix",
     "windows"
   ]
-  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
+  revision = "0c1ff786ef13daa914a3351c5e6b0321aed5960e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "df5908c3874362e7c5a6716bbae0c97a1502d1f60e96c296e908bab9973d1901"
+  inputs-digest = "e8f521d254d28b8aa43a2d3de169efb6fe9508383704230f69573194bcd22754"
   solver-name = "gps-cdcl"
   solver-version = 1
