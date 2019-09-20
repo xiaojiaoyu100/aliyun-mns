@@ -1,11 +1,7 @@
 package alimns
 
 import (
-	"context"
 	"encoding/xml"
-	"io"
-	"net"
-	"net/url"
 )
 
 // MnsError 错误码
@@ -92,32 +88,6 @@ type RespErr struct {
 	HostID    string   `xml:"HostId"`
 }
 
-func isNetworkErr(err error) bool {
-	netErr, ok := err.(net.Error)
-	return ok && (netErr.Temporary() || netErr.Timeout())
-}
-
-func isContextCanceled(err error) bool {
-	return err == context.Canceled
-}
-
-func isEOF(err error) bool {
-	urlErr, ok := err.(*url.Error)
-	return ok && urlErr.Err == io.EOF
-}
-
 func shouldRetry(err error) bool {
-	if isContextCanceled(err) {
-		return true
-	}
-	if isEOF(err) {
-		return true
-	}
-	if IsInternalError(err) {
-		return true
-	}
-	if isNetworkErr(err) {
-		return true
-	}
-	return false
+	return IsInternalError(err)
 }

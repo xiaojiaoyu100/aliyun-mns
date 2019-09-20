@@ -38,6 +38,8 @@ func NewClient(endpoint, accessKeyID, accessKeySecret string) (*Client, error) {
 		cast.WithHTTPClientTimeout(40*time.Second),
 		cast.WithBaseURL(endpoint),
 		cast.AddRequestHook(withAuth(accessKeyID, accessKeySecret)),
+		cast.WithRetry(3),
+		cast.WithConstantBackoffStrategy(time.Millisecond*100),
 	)
 	if err != nil {
 		return nil, err
