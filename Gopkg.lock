@@ -33,8 +33,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
-  version = "v1.3.0"
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
 
 [[projects]]
   name = "github.com/xiaojiaoyu100/cast"
@@ -45,27 +45,18 @@
 [[projects]]
   name = "github.com/xiaojiaoyu100/curlew"
   packages = ["."]
-  revision = "9f2f8f02eb2d6e4e1d50852cd6392a4db6944676"
-  version = "v0.2.0"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
-  revision = "227b76d455e791cb042b03e633e2f7fbcfdf74a5"
+  revision = "b9ac0f9fcfabb049db3adab6cf7b68e40b243252"
+  version = "v0.2.1"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix"]
   revision = "0c1ff786ef13daa914a3351c5e6b0321aed5960e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e8f521d254d28b8aa43a2d3de169efb6fe9508383704230f69573194bcd22754"
+  inputs-digest = "d60fed564fab7daee2297f2eb0ca46c5a1dcc267855c2d97efb5dc7d108234bf"
   solver-name = "gps-cdcl"
   solver-version = 1

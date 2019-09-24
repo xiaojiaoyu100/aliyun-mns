@@ -26,18 +26,14 @@
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "=v1.3.0"
-
-[prune]
-  unused-packages = true
-
-
-
-
+  version = "1.4.2"
 
 [[constraint]]
   name = "github.com/xiaojiaoyu100/curlew"
-  version = "0.2.0"
+  version = "0.2.1"
+
+[prune]
+  unused-packages = true
 
 [[constraint]]
   name = "github.com/xiaojiaoyu100/cast"
