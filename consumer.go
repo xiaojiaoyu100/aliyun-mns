@@ -135,7 +135,7 @@ func (c *Consumer) PeriodicallyFetchQueues() chan struct{} {
 	go func() {
 		err := c.BatchListQueue()
 		if err != nil {
-			c.log.WithError(err).Info("BatchListQueue")
+			c.log.WithError(err).Warning("BatchListQueue")
 		} else {
 			fetchQueueReady <- struct{}{}
 		}
@@ -143,7 +143,7 @@ func (c *Consumer) PeriodicallyFetchQueues() chan struct{} {
 		for range ticker.C {
 			err := c.BatchListQueue()
 			if err != nil {
-				c.log.WithError(err).Info("BatchListQueue")
+				c.log.WithError(err).Warning("BatchListQueue")
 				continue
 			} else {
 				fetchQueueReady <- struct{}{}
@@ -225,7 +225,7 @@ func (c *Consumer) Run() {
 	c.Schedule(createQueueReady)
 	c.gracefulShutdown()
 	<-c.shutdown
-	c.log.Info("Consumer is closed!")
+	c.log.Debugln("Consumer is closed!")
 }
 
 func (c *Consumer) PopCount() int32 {
@@ -237,7 +237,7 @@ func (c *Consumer) gracefulShutdown() {
 	signal.Notify(gracefulStop, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-gracefulStop
-		c.log.WithField("signal", sig.String()).Info("Accepting an os signal...")
+		c.log.WithField("signal", sig.String()).Debug("Accepting an os signal...")
 
 		c.isClosed = true
 		for _, queue := range c.queues {
@@ -250,14 +250,14 @@ func (c *Consumer) gracefulShutdown() {
 		for {
 			select {
 			case <-doom.C:
-				c.log.WithField("count", c.PopCount()).Info("timeout shutdown")
+				c.log.WithField("count", c.PopCount()).Debugln("timeout shutdown")
 				close(c.shutdown)
 				return
 			case <-check.C:
 				popCount := c.PopCount()
-				c.log.WithField("count", popCount).Info("check")
+				c.log.WithField("count", popCount).Debug("check")
 				if popCount == 0 {
-					c.log.Info("graceful shutdown")
+					c.log.Debugln("graceful shutdown")
 					close(c.shutdown)
 					return
 				}
@@ -272,7 +272,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 		for {
 			select {
 			case <-queue.longPollQuit:
-				c.log.WithField("queue", queue.Name).Info("long poll quit")
+				c.log.WithField("queue", queue.Name).Debug("long poll quit")
 				return
 			default:
 				time.Sleep(50 * time.Millisecond)
@@ -327,6 +327,8 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		if receiveMsg.DequeueCount > dequeueCount {
 			c.log.
 				WithField("queue", queue.Name).
+				WithField("message_id", receiveMsg.MessageID).
+				WithField("receipt_handle", receiveMsg.ReceiptHandle).
 				WithField("body", body).
 				WithField("count", receiveMsg.DequeueCount).
 				Error("The message is dequeued many times.")
@@ -352,7 +354,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 					ticker.Stop()
 					return
 				default:
-					c.log.WithError(err).WithField("queue", queue.Name).Info("ChangeVisibilityTimeout")
+					c.log.WithError(err).WithField("queue", queue.Name).Error("ChangeVisibilityTimeout")
 				}
 			case <-tickerStop:
 				ticker.Stop()
@@ -372,7 +374,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			if queue.Backoff != nil {
 				_, err = c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
 				if err != nil {
-					c.log.WithError(err).WithField("queue", queue.Name).Info("ChangeVisibilityTimeout")
+					c.log.WithError(err).WithField("queue", queue.Name).Error("ChangeVisibilityTimeout")
 				}
 			}
 		default:
@@ -426,7 +428,7 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 					queue.dispatcher.Submit(j)
 				}
 			case <-queue.consumeQuit:
-				c.log.WithField("queue", queue.Name).Info("Consumer quit")
+				c.log.WithField("queue", queue.Name).Debug("Consumer quit")
 				return
 			}
 		}

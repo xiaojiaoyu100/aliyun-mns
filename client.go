@@ -59,6 +59,11 @@ func (c *Client) AddLogHook(f LogHook) {
 	c.log.AddHook(m)
 }
 
+// EnableDebug enables debug info.
+func (c *Client) EnableDebug() {
+	c.log.SetLevel(logrus.DebugLevel)
+}
+
 // SetQueuePrefix sets the query param for ListQueue.
 func (c *Client) SetQueuePrefix(prefix string) {
 	c.queuePrefix = prefix
