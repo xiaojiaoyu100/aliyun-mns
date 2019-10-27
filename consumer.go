@@ -117,7 +117,6 @@ func (c *Consumer) AddQueue(q *Queue) error {
 
 	q.dispatcher, err = curlew.New(
 		curlew.WithMaxWorkerNum(q.Parallel),
-		curlew.WithJobSize(q.Parallel),
 		curlew.WithMonitor(monitor),
 	)
 	if err != nil {
@@ -315,7 +314,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		}()
 		m := new(M)
 		var body string
-		if IsBase54(receiveMsg.MessageBody) {
+		if IsBase64(receiveMsg.MessageBody) {
 			b64bytes, err := base64.StdEncoding.DecodeString(receiveMsg.MessageBody)
 			if err != nil {
 				c.log.WithError(err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
@@ -325,8 +324,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			body = receiveMsg.MessageBody
 		}
 		if receiveMsg.DequeueCount > dequeueCount {
-			c.log.
-				WithField("queue", queue.Name).
+			c.log.WithField("queue", queue.Name).
 				WithField("message_id", receiveMsg.MessageID).
 				WithField("receipt_handle", receiveMsg.ReceiptHandle).
 				WithField("body", body).
