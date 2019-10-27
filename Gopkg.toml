@@ -30,7 +30,7 @@
 
 [[constraint]]
   name = "github.com/xiaojiaoyu100/curlew"
-  version = "0.2.2"
+  version = "0.2.3"
 
 [prune]
   unused-packages = true

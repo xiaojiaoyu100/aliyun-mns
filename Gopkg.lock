@@ -45,18 +45,18 @@
 [[projects]]
   name = "github.com/xiaojiaoyu100/curlew"
   packages = ["."]
-  revision = "aa2cbe471a5fce473c95f080177f97fc1c2c85d7"
-  version = "v0.2.2"
+  revision = "9ed287c96b16a1eb6e3435c316cf12f6f6ace468"
+  version = "v0.2.3"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "0c1ff786ef13daa914a3351c5e6b0321aed5960e"
+  revision = "33540a1f603772f9d4b761f416f5c10dade23e96"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "29d85a7fb95b18e3d789e801e915770e1498ba1b1ded6faa232f1df33056d0b6"
+  inputs-digest = "7ddadb20f26bae210fe649c252445fe96f9d4e65267e7ef7d437a1a5edd0c793"
   solver-name = "gps-cdcl"
   solver-version = 1
