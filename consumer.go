@@ -451,7 +451,7 @@ func TimestampInMs() int64 {
 }
 
 // Parallel 返回并发数
-func Parallel() int {value
+func Parallel() int {
 	p := runtime.NumCPU() * 2
 	if p > maxReceiveMessage {
 		return maxReceiveMessage

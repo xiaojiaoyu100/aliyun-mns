@@ -9,7 +9,9 @@
 * 监控报警
 * 优雅的关闭消费者
 * 处理函数处理最大时间限制
-* 队列工作协程弹性扩缩
+* 队列消费者使用协程池，每一个消息队列独占自己的协程池
+* 发送消息失败保存进入redis，尝试重新发送，提高发送成功率
+* 业务需要自己做消息幂等，有可能出现同样消息内容发送多次，这种情况非常罕见
 
 # 消费者
 
@@ -29,7 +31,12 @@ func Handle2(m *alimns.M) error {
 }
 
 func main() {
-	client, err := alimns.NewClient(endpoint, accessKeyId, accessKeySecret)
+	client, err := alimns.NewClient(alimns.Config{
+		Endpoint: "",
+		QueuePrefix: "", // 可以留空，表示拉取全部消息队列
+		AccessKeyID: "",
+		AccessKeySecret: "",
+	})
 	if err != nil {
 		return 
 	}
