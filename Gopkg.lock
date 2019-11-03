@@ -4,13 +4,33 @@
 [[projects]]
   name = "github.com/cep21/circuit"
   packages = [
-    ".",
-    "closers/hystrix",
-    "faststats",
-    "internal/evar"
+    "v3",
+    "v3/closers/hystrix",
+    "v3/faststats",
+    "v3/internal/evar"
   ]
-  revision = "9acd688e705c9ff330ef0ec354c801bade149b92"
-  version = "v2.4.2"
+  revision = "768780274348ba1e986a23a5feef9c829ab37426"
+  version = "v3.1.0"
+
+[[projects]]
+  name = "github.com/go-redis/redis"
+  packages = [
+    ".",
+    "internal",
+    "internal/consistenthash",
+    "internal/hashtag",
+    "internal/pool",
+    "internal/proto",
+    "internal/util"
+  ]
+  revision = "7f69d5e32072d151eb6936cbe2306413e8117488"
+  version = "v6.15.6"
+
+[[projects]]
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
+  version = "v1.3.2"
 
 [[projects]]
   name = "github.com/google/go-querystring"
@@ -37,10 +57,29 @@
   version = "v1.4.2"
 
 [[projects]]
+  name = "github.com/vmihailenco/msgpack"
+  packages = [
+    ".",
+    "codes"
+  ]
+  revision = "cd92a145e6d2ce09e792f838dc0b669b680aea29"
+  version = "v4.1.1"
+
+[[projects]]
+  name = "github.com/vmihailenco/tagparser"
+  packages = [
+    ".",
+    "internal",
+    "internal/parser"
+  ]
+  revision = "30ae5c3178272fa372e1e9c17e68f181e0ebe285"
+  version = "v0.1.0"
+
+[[projects]]
   name = "github.com/xiaojiaoyu100/cast"
   packages = ["."]
-  revision = "496630e19bf93121ce87c00a502283dccaf40cd0"
-  version = "v1.2.5"
+  revision = "2e05d7fac5fbd6129010553e60294982eb959e11"
+  version = "v1.2.6"
 
 [[projects]]
   name = "github.com/xiaojiaoyu100/curlew"
@@ -50,13 +89,37 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "0deb6923b6d97481cb43bc1043fe5b72a0143032"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "33540a1f603772f9d4b761f416f5c10dade23e96"
+  revision = "f43be2a4598cf3a47be9f94f0c28197ed9eae611"
+
+[[projects]]
+  name = "google.golang.org/appengine"
+  packages = [
+    ".",
+    "datastore",
+    "datastore/internal/cloudkey",
+    "datastore/internal/cloudpb",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api"
+  ]
+  revision = "971852bfffca25b069c31162ae8f247a3dba083b"
+  version = "v1.6.5"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7ddadb20f26bae210fe649c252445fe96f9d4e65267e7ef7d437a1a5edd0c793"
+  inputs-digest = "98495cac3257707e601b8598d86addb2b73ed8699b847fc24e8c3ba87b136515"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
+
+	"github.com/vmihailenco/msgpack"
 )
 
 // SendMessageResponse 发送消息回复
@@ -16,30 +17,10 @@ type SendMessageResponse struct {
 
 // SendBase64EncodedJSONMessage 发送base64编码的json消息
 func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface{},
-	setters ...MessageSetter) (*SendMessageResponse, error) {
-	var (
-		resp *SendMessageResponse
-		err  error
-	)
-	ended := make(chan struct{})
-	go func() {
-		for {
-			resp, err = c.sendBase64EncodedJSONMessage(name, messageBody, setters...)
-			switch {
-			case shouldRetry(err):
-				time.Sleep(time.Millisecond * 100)
-				continue
-			default:
-				close(ended)
-				return
-			}
-		}
-	}()
-	select {
-	case <-time.After(time.Second * 60):
-		return nil, sendMessageTimeoutError
-	case <-ended:
-		return resp, err
+	setters ...MessageSetter) {
+	_, err := c.sendBase64EncodedJSONMessage(name, messageBody, setters...)
+	if err != nil {
+		c.log.WithField("queue", name).WithError(err).Errorf("SendBase64EncodedJSONMessage: %v", messageBody)
 	}
 }
 
@@ -51,11 +32,37 @@ func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, set
 	c.log.WithField("queue", name).WithField("body", body).Info("sendBase64EncodedJSONMessage")
 	b64Body := base64.StdEncoding.EncodeToString(b)
 	c.log.WithField("queue", name).WithField("b64body", b64Body).Info("sendBase64EncodedJSONMessage")
-	resp, err := c.sendMessage(name, b64Body, setters...)
+	return c.sendMessage(name, b64Body, setters...)
+}
+
+func (c *Client) send(name string, message Message) (*SendMessageResponse, error) {
+	var err error
+	requestLine := fmt.Sprintf(mnsSendMessage, name)
+	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&message)
+	resp, err := c.ca.Do(req)
 	if err != nil {
-		c.log.WithField("queue", name).WithError(err).WithField("body", body).Error("sendBase64EncodedJSONMessage")
+		return nil, err
 	}
-	return resp, err
+	switch resp.StatusCode() {
+	case http.StatusCreated:
+		var sendMessageResponse SendMessageResponse
+		if err := resp.DecodeFromXML(&sendMessageResponse); err != nil {
+			return nil, err
+		}
+		return &sendMessageResponse, nil
+	default:
+		var respErr RespErr
+		if err := resp.DecodeFromXML(&respErr); err != nil {
+			return nil, err
+		}
+		switch respErr.Code {
+		case queueNotExistError.Error():
+			return nil, queueNotExistError
+		case internalError.Error():
+			return nil, internalError
+		}
+		return nil, errors.New(respErr.Message)
+	}
 }
 
 func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter) (*SendMessageResponse, error) {
@@ -78,6 +85,23 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&attri)
 
 	resp, err := c.ca.Do(req)
+
+	if shouldRetry(err) {
+		w := wrapper{
+			QueueName: name,
+			Message:   attri,
+		}
+		b, err := msgpack.Marshal(w)
+		if err != nil {
+			c.log.WithError(err).Errorf("msgpack.Marshal: %v", w)
+		} else {
+			_, err = c.config.RPush(aliyunMnsRetryQueue, string(b)).Result()
+			if err != nil {
+				c.log.WithError(err).Errorf("RPush: %s", b)
+			}
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}

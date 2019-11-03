@@ -2,6 +2,8 @@ package alimns
 
 import (
 	"encoding/xml"
+
+	"github.com/xiaojiaoyu100/cast"
 )
 
 // MnsError 错误码
@@ -89,5 +91,5 @@ type RespErr struct {
 }
 
 func shouldRetry(err error) bool {
-	return IsInternalError(err)
+	return IsInternalError(err) || cast.ShouldRetry(err)
 }

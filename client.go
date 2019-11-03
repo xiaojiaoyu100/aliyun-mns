@@ -14,15 +14,13 @@ import (
 
 // Client 存储了阿里云的相关信息
 type Client struct {
-	ca              *cast.Cast
-	log             *logrus.Logger
-	queuePrefix     string
-	accessKeyID     string
-	accessKeySecret string
+	config Config
+	ca     *cast.Cast
+	log    *logrus.Logger
 }
 
 // NewClient 返回Client的实例
-func NewClient(endpoint, accessKeyID, accessKeySecret string) (*Client, error) {
+func NewClient(config Config) (*Client, error) {
 	log := logrus.New()
 	log.WithFields(logrus.Fields{
 		"source": "alimns",
@@ -32,12 +30,12 @@ func NewClient(endpoint, accessKeyID, accessKeySecret string) (*Client, error) {
 	})
 	log.SetReportCaller(true)
 	log.SetOutput(os.Stdout)
-	log.SetLevel(logrus.InfoLevel)
+	log.SetLevel(logrus.WarnLevel)
 
 	c, err := cast.New(
 		cast.WithHTTPClientTimeout(40*time.Second),
-		cast.WithBaseURL(endpoint),
-		cast.AddRequestHook(withAuth(accessKeyID, accessKeySecret)),
+		cast.WithBaseURL(config.Endpoint),
+		cast.AddRequestHook(withAuth(config.AccessKeyID, config.AccessKeySecret)),
 		cast.WithRetry(3),
 		cast.WithConstantBackoffStrategy(time.Millisecond*100),
 	)
@@ -46,10 +44,9 @@ func NewClient(endpoint, accessKeyID, accessKeySecret string) (*Client, error) {
 	}
 
 	return &Client{
-		ca:              c,
-		log:             log,
-		accessKeyID:     accessKeyID,
-		accessKeySecret: accessKeySecret,
+		config: config,
+		ca:     c,
+		log:    log,
 	}, nil
 }
 
@@ -66,7 +63,7 @@ func (c *Client) EnableDebug() {
 
 // SetQueuePrefix sets the query param for ListQueue.
 func (c *Client) SetQueuePrefix(prefix string) {
-	c.queuePrefix = prefix
+	c.config.QueuePrefix = prefix
 }
 
 // Base64Md5 md5值用base64编码

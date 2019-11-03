@@ -13,6 +13,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-redis/redis"
+	"github.com/vmihailenco/msgpack"
+
 	"github.com/xiaojiaoyu100/curlew"
 )
 
@@ -44,7 +47,7 @@ func NewConsumer(client *Client) *Consumer {
 func (c *Consumer) BatchListQueue() error {
 	request := new(ListQueueRequest)
 	request.RetNumber = "1000"
-	request.Prefix = c.queuePrefix
+	request.Prefix = c.config.QueuePrefix
 	resp, err := c.ListQueue(request)
 	if err != nil {
 		return err
@@ -222,6 +225,7 @@ func (c *Consumer) Run() {
 	fetchQueueReady := c.PeriodicallyFetchQueues()
 	createQueueReady := c.CreateQueueList(fetchQueueReady)
 	c.Schedule(createQueueReady)
+	c.retrySendMessage()
 	c.gracefulShutdown()
 	<-c.shutdown
 	c.log.Debugln("Consumer is closed!")
@@ -229,6 +233,59 @@ func (c *Consumer) Run() {
 
 func (c *Consumer) PopCount() int32 {
 	return c.runningNum
+}
+
+func (c *Consumer) retrySendMessage() {
+	go func() {
+		for {
+			pipe := c.config.Pipeline()
+
+			strCmd := pipe.BRPopLPush(aliyunMnsRetryQueue, aliyunMnsProcessingQueue, 3*time.Second)
+			pipe.Expire(aliyunMnsProcessingQueue, time.Minute*5)
+
+			cmders, err := pipe.Exec()
+			if err != nil {
+				continue
+			}
+
+			if len(cmders) != 2 {
+				continue
+			}
+
+			strCmd, ok := cmders[0].(*redis.StringCmd)
+			if !ok {
+				continue
+			}
+
+			value, err := strCmd.Result()
+			if err != nil {
+				continue
+			}
+
+			if value == "" {
+				continue
+			}
+
+			w := &wrapper{}
+
+			err = msgpack.Unmarshal([]byte(value), w)
+			if err != nil {
+				c.log.WithError(err).Errorf("msgpack.Unmarshal: %s", value)
+				continue
+			}
+
+			_, err = c.send(w.QueueName, w.Message)
+			if err != nil {
+				c.log.WithError(err).Errorf("send: %s, %v", w.QueueName, w.Message)
+				continue
+			}
+
+			_, err = c.config.LRem(aliyunMnsProcessingQueue, 1, value).Result()
+			if err != nil {
+				c.log.WithError(err).Error("LRem")
+			}
+		}
+	}()
 }
 
 func (c *Consumer) gracefulShutdown() {
@@ -394,7 +451,7 @@ func TimestampInMs() int64 {
 }
 
 // Parallel 返回并发数
-func Parallel() int {
+func Parallel() int {value
 	p := runtime.NumCPU() * 2
 	if p > maxReceiveMessage {
 		return maxReceiveMessage

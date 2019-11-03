@@ -1,6 +1,6 @@
 # Gopkg.toml example
 #
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -24,17 +24,27 @@
 #   go-tests = true
 #   unused-packages = true
 
+
+[[constraint]]
+  name = "github.com/go-redis/redis"
+  version = "6.15.6"
+
 [[constraint]]
   name = "github.com/sirupsen/logrus"
   version = "1.4.2"
+
+[[constraint]]
+  name = "github.com/vmihailenco/msgpack"
+  version = "4.1.1"
+
+[[constraint]]
+  name = "github.com/xiaojiaoyu100/cast"
+  version = "1.2.6"
 
 [[constraint]]
   name = "github.com/xiaojiaoyu100/curlew"
   version = "0.2.3"
 
 [prune]
+  go-tests = true
   unused-packages = true
-
-[[constraint]]
-  name = "github.com/xiaojiaoyu100/cast"
-  version = "1.2.5"
