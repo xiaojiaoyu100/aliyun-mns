@@ -21,6 +21,9 @@ type Client struct {
 
 // NewClient 返回Client的实例
 func NewClient(config Config) (*Client, error) {
+
+	level := logrus.WarnLevel
+
 	log := logrus.New()
 	log.WithFields(logrus.Fields{
 		"source": "alimns",
@@ -30,7 +33,7 @@ func NewClient(config Config) (*Client, error) {
 	})
 	log.SetReportCaller(true)
 	log.SetOutput(os.Stdout)
-	log.SetLevel(logrus.WarnLevel)
+	log.SetLevel(level)
 
 	c, err := cast.New(
 		cast.WithHTTPClientTimeout(40*time.Second),
@@ -38,6 +41,7 @@ func NewClient(config Config) (*Client, error) {
 		cast.AddRequestHook(withAuth(config.AccessKeyID, config.AccessKeySecret)),
 		cast.WithRetry(3),
 		cast.WithConstantBackoffStrategy(time.Millisecond*100),
+		cast.WithLogLevel(level),
 	)
 	if err != nil {
 		return nil, err

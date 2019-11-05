@@ -1,5 +1,6 @@
 package alimns
 
+// Config has client options.
 type Config struct {
 	Cmdable
 

@@ -231,6 +231,7 @@ func (c *Consumer) Run() {
 	c.log.Debugln("Consumer is closed!")
 }
 
+// PopCount means the current number of running handlers.
 func (c *Consumer) PopCount() int32 {
 	return c.runningNum
 }
