@@ -238,6 +238,12 @@ func (c *Consumer) PopCount() int32 {
 func (c *Consumer) retrySendMessage() {
 	go func() {
 		for {
+			time.Sleep(1 * time.Second)
+
+			if c.config.Cmdable == nil {
+				continue
+			}
+
 			pipe := c.config.Pipeline()
 
 			strCmd := pipe.BRPopLPush(aliyunMnsRetryQueue, aliyunMnsProcessingQueue, 3*time.Second)

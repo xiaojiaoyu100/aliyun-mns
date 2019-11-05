@@ -62,6 +62,29 @@ func (c *Client) send(name string, message Message) (*SendMessageResponse, error
 	}
 }
 
+func (c *Client) pushRetryQueue(name string, message Message) {
+	if c.config.Cmdable == nil {
+		return
+	}
+
+	w := wrapper{
+		QueueName: name,
+		Message:   message,
+	}
+
+	b, err := msgpack.Marshal(w)
+	if err != nil {
+		c.log.WithError(err).Errorf("msgpack.Marshal: %v", w)
+		return
+	}
+
+	_, err = c.config.RPush(aliyunMnsRetryQueue, string(b)).Result()
+	if err != nil {
+		c.log.WithError(err).Errorf("RPush: %s", b)
+		return
+	}
+}
+
 func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter) (*SendMessageResponse, error) {
 	var err error
 
@@ -82,21 +105,8 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&attri)
 
 	resp, err := c.ca.Do(req)
-
 	if shouldRetry(err) {
-		w := wrapper{
-			QueueName: name,
-			Message:   attri,
-		}
-		b, err := msgpack.Marshal(w)
-		if err != nil {
-			c.log.WithError(err).Errorf("msgpack.Marshal: %v", w)
-		} else {
-			_, err = c.config.RPush(aliyunMnsRetryQueue, string(b)).Result()
-			if err != nil {
-				c.log.WithError(err).Errorf("RPush: %s", b)
-			}
-		}
+		c.pushRetryQueue(name, attri)
 	}
 
 	if err != nil {
