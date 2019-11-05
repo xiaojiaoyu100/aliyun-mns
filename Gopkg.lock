@@ -97,7 +97,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "f43be2a4598cf3a47be9f94f0c28197ed9eae611"
+  revision = "e8c54fb511f6a2d695a4403ae0dab1c05aef011a"
 
 [[projects]]
   name = "google.golang.org/appengine"

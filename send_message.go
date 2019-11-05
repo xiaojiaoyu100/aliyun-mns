@@ -17,11 +17,8 @@ type SendMessageResponse struct {
 
 // SendBase64EncodedJSONMessage 发送base64编码的json消息
 func (c *Client) SendBase64EncodedJSONMessage(name string, messageBody interface{},
-	setters ...MessageSetter) {
-	_, err := c.sendBase64EncodedJSONMessage(name, messageBody, setters...)
-	if err != nil {
-		c.log.WithField("queue", name).WithError(err).Errorf("SendBase64EncodedJSONMessage: %v", messageBody)
-	}
+	setters ...MessageSetter) (*SendMessageResponse, error) {
+	return c.sendBase64EncodedJSONMessage(name, messageBody, setters...)
 }
 
 func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, setters ...MessageSetter) (*SendMessageResponse, error) {
