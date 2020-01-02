@@ -247,7 +247,7 @@ func (c *Consumer) retrySendMessage() {
 
 			pipe := c.config.Pipeline()
 
-			strCmd := pipe.BRPopLPush(aliyunMnsRetryQueue, aliyunMnsProcessingQueue, 3*time.Second)
+			strCmd := pipe.RPopLPush(aliyunMnsRetryQueue, aliyunMnsProcessingQueue)
 			pipe.Expire(aliyunMnsProcessingQueue, time.Minute*5)
 
 			cmders, err := pipe.Exec()
