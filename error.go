@@ -93,3 +93,10 @@ type RespErr struct {
 func shouldRetry(err error) bool {
 	return IsInternalError(err) || cast.ShouldRetry(err)
 }
+
+type transientError interface {
+	error
+	// Transient returns whether the error is transient, if returns true, the handler error will not be reported in a
+	// short period of time.
+	Transient() bool
+}

@@ -30,7 +30,6 @@ type Consumer struct {
 	doneQueues map[string]struct{}
 	shutdown   chan struct{}
 	isClosed   bool
-	runningNum int32
 }
 
 // NewConsumer 生成了一个消费者
@@ -233,7 +232,11 @@ func (c *Consumer) Run() {
 
 // PopCount means the current number of running handlers.
 func (c *Consumer) PopCount() int32 {
-	return c.runningNum
+	var popCount int32
+	for _, queue := range c.queues {
+		popCount += queue.popCount
+	}
+	return popCount
 }
 
 func (c *Consumer) retrySendMessage() {
@@ -339,7 +342,11 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 				return
 			default:
 				time.Sleep(50 * time.Millisecond)
-				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(queue.Parallel))
+				num := queue.Parallel - int(queue.popCount)
+				if num <= 0 {
+					num = 1
+				}
+				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(num))
 				switch err {
 				case messageNotExistError:
 					continue
@@ -432,7 +439,10 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		case IsHandleCrash(err):
 			// 这里不报警
 		case err != nil:
-			c.log.WithError(err).WithField("queue", queue.Name).Error("OnReceive")
+			t, ok := err.(transientError)
+			if (ok && t.Transient() && receiveMsg.DequeueCount > dequeueCount) || !ok {
+				c.log.WithError(err).WithField("queue", queue.Name).Error("OnReceive")
+			}
 			if queue.Backoff != nil {
 				_, err = c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
 				if err != nil {
@@ -482,9 +492,9 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 					j.Arg = receiveMessage
 					j.Fn = func(ctx context.Context, arg interface{}) error {
 						rm := arg.(*ReceiveMessage)
-						atomic.AddInt32(&c.runningNum, 1)
+						atomic.AddInt32(&queue.popCount, 1)
 						c.OnReceive(queue, rm)
-						atomic.AddInt32(&c.runningNum, -1)
+						atomic.AddInt32(&queue.popCount, -1)
 						return nil
 					}
 					queue.dispatcher.Submit(j)

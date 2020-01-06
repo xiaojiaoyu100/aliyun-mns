@@ -26,6 +26,7 @@ type Queue struct {
 	longPollQuit          chan struct{}
 	consumeQuit           chan struct{}
 	dispatcher            *curlew.Dispatcher
+	popCount              int32
 }
 
 // Stop 使消息队列拉取消息和消费消息停止
