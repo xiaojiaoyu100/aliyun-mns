@@ -3,6 +3,7 @@ package alimns
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -107,6 +108,10 @@ func setParallel(parallel int) int {
 
 // AddQueue 添加一个消息队列
 func (c *Consumer) AddQueue(q *Queue) error {
+	prefix := c.Client.config.QueuePrefix
+	if prefix != "" && !strings.HasPrefix(q.Name, prefix) {
+		return fmt.Errorf("Queue name must start with %s!", prefix)
+	}
 	var err error
 	q.Parallel = setParallel(q.Parallel)
 	q.receiveMessageChan = make(chan *ReceiveMessage)
