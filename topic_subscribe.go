@@ -18,15 +18,15 @@ func checkSubscription(name string) bool {
 }
 
 // Subscribe 订阅主题
-func (c *Client) Subscribe(topic, subscriptions string, endpoint EndPoint, setters ...SubscribeParamSetter) error {
+func (c *Client) Subscribe(topic, subscription string, endpoint EndPointer, setters ...SubscribeParamSetter) error {
 	var err error
 
 	if !checkTopicName(topic) {
 		return errors.New("unqualified topic name")
 	}
 
-	if !checkSubscription(subscriptions) {
-		return errors.New("unqualified Subscriptio nname")
+	if !checkSubscription(subscription) {
+		return errors.New("unqualified subscription nname")
 	}
 
 	ep, err := endpoint.EndPoint()
@@ -44,7 +44,7 @@ func (c *Client) Subscribe(topic, subscriptions string, endpoint EndPoint, sette
 	}
 
 	subscribeParam.EndPoint = ep
-	requestLine := fmt.Sprintf(mnsSubscribe, topic, subscriptions)
+	requestLine := fmt.Sprintf(mnsSubscribe, topic, subscription)
 
 	req := c.ca.NewRequest().Put().WithPath(requestLine).WithXMLBody(&subscribeParam).WithTimeout(apiTimeout)
 	resp, err := c.ca.Do(req)

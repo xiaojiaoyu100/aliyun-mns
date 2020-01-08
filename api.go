@@ -16,17 +16,11 @@ const (
 	mnsChangeMessageVisibility = "/queues/%s/messages?receiptHandle=%s&visibilityTimeout=%s"
 )
 
-// 主题管理
+// 主题订阅管理
 const (
-	mnsCreateTopic        = "/topics/%s"
-	mnsSetTopicAttributes = "/topics/%s?metaoverride=true"
-	mnsGetTopicAttributes = "/topics/%s"
-	mnsDeleteTopic        = "/topics/%s"
-	mnsListTopic          = "/topics"
-)
-
-// 订阅管理
-const (
+	mnsCreateTopic               = "/topics/%s"
+	mnsSetTopicAttributes        = "/topics/%s?metaoverride=true"
+	mnsDeleteTopic               = "/topics/%s"
 	mnsSubscribe                 = "/topics/%s/subscriptions/%s"
 	mnsSetSubscriptionAttributes = "/topics/%s/subscriptions/%s?metaoverride=true"
 	mnsGetSubscriptionAttributes = "/topics/%s/subscriptions/%s"
