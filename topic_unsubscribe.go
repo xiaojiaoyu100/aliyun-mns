@@ -7,18 +7,18 @@ import (
 )
 
 // Unsubscribe 取消订阅主题
-func (c *Client) Unsubscribe(topic, subscriptions string) error {
+func (c *Client) Unsubscribe(topic, subscription string) error {
 	var err error
 
 	if !checkTopicName(topic) {
 		return errors.New("unqualified topic name")
 	}
 
-	if !checkSubscription(subscriptions) {
-		return errors.New("unqualified Subscriptio nname")
+	if !checkSubscription(subscription) {
+		return errors.New("unqualified subscription nname")
 	}
 
-	requestLine := fmt.Sprintf(mnsUnsubscribe, topic, subscriptions)
+	requestLine := fmt.Sprintf(mnsUnsubscribe, topic, subscription)
 	req := c.ca.NewRequest().Delete().WithPath(requestLine).WithTimeout(apiTimeout)
 
 	resp, err := c.ca.Do(req)
