@@ -1,6 +1,10 @@
 # aliyun-mns
 
-[aliyun-mns](https://www.aliyun.com/product/mns/)是对阿里云消息服务的封装，具有以下特点：
+[aliyun-mns](https://www.aliyun.com/product/mns/)是对阿里云消息服务的封装
+
+## 队列模型
+
+具有以下特点：
 
 * 动态创建队列
 * 可以设置消费者数目
@@ -12,10 +16,8 @@
 * 队列消费者使用协程池，每一个消息队列独占自己的协程池
 * 发送消息失败保存进入redis，尝试重新发送，提高发送成功率
 * 业务需要自己做消息幂等，有可能出现同样消息内容发送多次，这种情况非常罕见
-* 支持主题订阅api
 
-# 队列模型
-## 消费者
+### 消费者
 
 ```go
 package main
@@ -40,7 +42,7 @@ func main() {
 		AccessKeySecret: "",
 	})
 	if err != nil {
-		return 
+		return
 	}
 	consumer := alimns.NewConsumer(client)
 	err = consumer.AddQueue(
@@ -50,7 +52,7 @@ func main() {
 		},
 	)
 	if err != nil {
-		return 
+		return
 	}
 	err = consumer.AddQueue(
 		&alimns.Queue{
@@ -60,20 +62,30 @@ func main() {
 		},
 	)
 	if err != nil {
-	    return 
+	    return
 	}
 	consumer.Run()
 }
 ```
 
-## 生产者
+### 生产者
+
 ```go
 producer := alimns.NewProducer(client)
 producer.SendBase64EncodedJSONMessage()
 ```
-# 主题模型
-## 创建/订阅主题
-```
+
+## 主题模型
+
+支持以下主题api:
+
+* 支持主题的创建，删除
+* 支持订阅主题，取消主题订阅
+* 支持向主题发布消息
+
+### 创建/订阅主题
+
+```go
 endpoint := QueueEndPoint{
 	AccountID: "xxx",
 	Region:    "xxx",
@@ -93,8 +105,10 @@ if err != nil {
 }
 
 ```
-## 发送订阅消息
-```
+
+### 发布消息
+
+```go
 messageID, err := client.PublishMessage("topicName", "hello world")
 if err != nil {
 	return

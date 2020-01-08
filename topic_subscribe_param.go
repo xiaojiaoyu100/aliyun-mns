@@ -11,7 +11,7 @@ const (
 	ExponentialDecayRetryStrategy = "EXPONENTIAL_DECAY_RETRY"
 	XMLNotifyFormat               = "XML"
 	JSONNotifyFormat              = "JSON"
-	SimplifieNotifyFormat         = "SIMPLIFIED"
+	SimplifiedNotifyFormat        = "SIMPLIFIED"
 )
 
 var defaultSubscribeParam = SubscribeParam{
@@ -57,9 +57,9 @@ func WithNotifyStrategy(ns string) SubscribeParamSetter {
 // WithNotifyContentFormat 设置最长存活时间
 func WithNotifyContentFormat(s string) SubscribeParamSetter {
 	return func(attri *SubscribeParam) error {
-		if s != XMLNotifyFormat && s != JSONNotifyFormat && s != SimplifieNotifyFormat {
+		if s != XMLNotifyFormat && s != JSONNotifyFormat && s != SimplifiedNotifyFormat {
 			return fmt.Errorf("notifyContentFormat参数错误，仅支持%s、%s、%s",
-				XMLNotifyFormat, JSONNotifyFormat, SimplifieNotifyFormat)
+				XMLNotifyFormat, JSONNotifyFormat, SimplifiedNotifyFormat)
 		}
 		attri.NotifyContentFormat = s
 		return nil
