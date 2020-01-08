@@ -15,3 +15,16 @@ const (
 	mnsBatchPeekMessage        = "/queues/%s/messages?peekonly=true&numOfMessages=%s"
 	mnsChangeMessageVisibility = "/queues/%s/messages?receiptHandle=%s&visibilityTimeout=%s"
 )
+
+// 主题订阅管理
+const (
+	mnsCreateTopic               = "/topics/%s"
+	mnsSetTopicAttributes        = "/topics/%s?metaoverride=true"
+	mnsDeleteTopic               = "/topics/%s"
+	mnsSubscribe                 = "/topics/%s/subscriptions/%s"
+	mnsSetSubscriptionAttributes = "/topics/%s/subscriptions/%s?metaoverride=true"
+	mnsGetSubscriptionAttributes = "/topics/%s/subscriptions/%s"
+	mnsUnsubscribe               = "/topics/%s/subscriptions/%s"
+	mnsListSubscriptionByTopic   = "/topics/%s/subscriptions"
+	mnsPublishMessage            = "/topics/%s/messages"
+)

@@ -26,6 +26,14 @@ const (
 	batchSendMessageNumLimitError      = MnsError("BatchSendMessageNumLimit")
 	handleCrashError                   = MnsError("handleCrash")
 	queueNumExceededLimitError         = MnsError("QueueNumExceededLimit")
+	subscriptionNameLengthError        = MnsError("SubscriptionNameLengthError")
+	subscriptionNameInvalidError       = MnsError("SubscriptionNameInvalid")
+	subscriptionAlreadyExistError      = MnsError("SubscriptionAlreadyExist")
+	endpointInvalidError               = MnsError("EndpointInvalid")
+	invalidArgumentError               = MnsError("InvalidArgument")
+	topicAlreadyExistError             = MnsError("TopicAlreadyExist")
+	topicNameLengthError               = MnsError("TopicNameLengthError")
+	topicNotExistError                 = MnsError("TopicNotExist")
 )
 
 // aliyun mns error code
