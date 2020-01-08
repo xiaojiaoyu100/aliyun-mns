@@ -12,8 +12,10 @@
 * 队列消费者使用协程池，每一个消息队列独占自己的协程池
 * 发送消息失败保存进入redis，尝试重新发送，提高发送成功率
 * 业务需要自己做消息幂等，有可能出现同样消息内容发送多次，这种情况非常罕见
+* 支持主题订阅api
 
-# 消费者
+# 队列模型
+## 消费者
 
 ```go
 package main
@@ -64,8 +66,37 @@ func main() {
 }
 ```
 
-# 生产者
+## 生产者
 ```go
 producer := alimns.NewProducer(client)
 producer.SendBase64EncodedJSONMessage()
+```
+# 主题模型
+## 创建/订阅主题
+```
+endpoint := QueueEndPoint{
+	AccountID: "xxx",
+	Region:    "xxx",
+	QueueName: "xxx",
+}
+
+// 创建
+err := client.CreateTopic("topicName")
+if err != nil {
+	return
+}
+
+// 订阅
+err = client.Subscribe("topicName", "subscriptionName", endpoint)
+if err != nil {
+	return
+}
+
+```
+## 发送订阅消息
+```
+messageID, err := client.PublishMessage("topicName", "hello world")
+if err != nil {
+	return
+}
 ```
