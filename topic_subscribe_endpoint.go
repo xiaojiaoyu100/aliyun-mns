@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// EndPoint 是用户订阅主题时，指定接收消息的终端地址；
+// EndPointer 是用户订阅主题时，指定接收消息的终端地址；
 // 当有消息发布到主题时，MNS会主动将消息推送到对应的 Endpoint； 多个Subscription可以指定同一个Endpoint。
 type EndPointer interface {
 	EndPoint() (string, error)

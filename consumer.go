@@ -110,7 +110,7 @@ func setParallel(parallel int) int {
 func (c *Consumer) AddQueue(q *Queue) error {
 	prefix := c.Client.config.QueuePrefix
 	if prefix != "" && !strings.HasPrefix(q.Name, prefix) {
-		return fmt.Errorf("Queue name must start with %s!", prefix)
+		return fmt.Errorf("queue name must start with %s", prefix)
 	}
 	var err error
 	q.Parallel = setParallel(q.Parallel)
