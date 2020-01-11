@@ -108,3 +108,13 @@ type transientError interface {
 	// short period of time.
 	Transient() bool
 }
+
+// TransientError implements the transientError interface.
+type TransientError struct {
+	Err error
+}
+
+// Transient means the error is transient.
+func (err TransientError) Transient() bool {
+	return true
+}
