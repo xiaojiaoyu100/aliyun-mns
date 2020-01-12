@@ -118,3 +118,8 @@ type TransientError struct {
 func (err TransientError) Transient() bool {
 	return true
 }
+
+// Error implements the error interface.
+func (err TransientError) Error() string {
+	return err.Err.Error()
+}
