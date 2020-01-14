@@ -18,9 +18,9 @@ const (
 )
 
 const (
-	defaultRetentionPeriod = 1296000 // 15天
-	minRetentionPeriod     = 60      // 60秒
-	maxRetentionPeriod     = 1296000 // 15天
+	defaultRetentionPeriod = 604800 // 7天
+	minRetentionPeriod     = 60     // 60秒
+	maxRetentionPeriod     = 604800 // 7天
 )
 
 const (

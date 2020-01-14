@@ -7,11 +7,16 @@ import (
 )
 
 const (
-	BackOffRetryStrategy          = "BACKOFF_RETRY"
+	// BackOffRetryStrategy 重试3次，每次重试的间隔时间是10秒到 20秒之间的随机值
+	BackOffRetryStrategy = "BACKOFF_RETRY"
+	// ExponentialDecayRetryStrategy 重试176次，每次重试的间隔时间指数递增至512秒，总计重试时间为1天；每次重试的具体间隔为：1，2，4，8，16，32，64，128，256，512，512 ... 512 秒（共167个512）
 	ExponentialDecayRetryStrategy = "EXPONENTIAL_DECAY_RETRY"
-	XMLNotifyFormat               = "XML"
-	JSONNotifyFormat              = "JSON"
-	SimplifiedNotifyFormat        = "SIMPLIFIED"
+	// XMLNotifyFormat 消息体为XML格式，包含消息正文和消息属性
+	XMLNotifyFormat = "XML"
+	// JSONNotifyFormat 消息体为JSON格式，包含消息正文和消息属性
+	JSONNotifyFormat = "JSON"
+	// SimplifiedNotifyFormat 消息体即用户发布的消息，不包含任何属性信息
+	SimplifiedNotifyFormat = "SIMPLIFIED"
 )
 
 var defaultSubscribeParam = SubscribeParam{
