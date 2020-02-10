@@ -410,7 +410,8 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		m.QueueName = queue.Name
 		m.MessageBody = body
 		m.EnqueueTime = receiveMsg.EnqueueTime
-		errChan <- queue.OnReceive(m)
+		m.codec = queue.MakeDefaultCodecIfNone()
+		errChan <- queue.OnReceive(queue.MakeDefaultContextIfNone(m), m)
 	}()
 
 	go func() {
