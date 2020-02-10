@@ -21,9 +21,6 @@ func (m *M) Decode(v interface{}) error {
 // Handle 消息处理函数模板
 type Handle func(ctx context.Context, m *M) error
 
-// MakeContext 生成一个context
-type MakeContext func(m *M) context.Context
-
 // Queue 消息队列
 type Queue struct {
 	Name                  string
@@ -31,8 +28,8 @@ type Queue struct {
 	QueueAttributeSetters []QueueAttributeSetter
 	OnReceive             Handle
 	Backoff               BackoffFunc
-	MakeContext           MakeContext
-	Codec                 Codec
+	codec                 Codec
+	makeContext           MakeContext
 	isScheduled           bool
 	receiveMessageChan    chan *ReceiveMessage
 	longPollQuit          chan struct{}
@@ -48,21 +45,4 @@ func (q *Queue) Stop() {
 		close(q.longPollQuit)
 		close(q.consumeQuit)
 	}
-}
-
-// MakeDefaultCodecIfNone 保证codec不为空，默认是json编解码
-func (q *Queue) MakeDefaultCodecIfNone() Codec {
-	if q.Codec == nil {
-		q.Codec = JSONCodec{}
-	}
-	return q.Codec
-}
-
-// MakeDefaultContextIfNone 保证context不为空
-func (q *Queue) MakeDefaultContextIfNone(m *M) context.Context {
-	ctx := q.MakeContext(m)
-	if ctx == nil {
-		return context.TODO()
-	}
-	return ctx
 }

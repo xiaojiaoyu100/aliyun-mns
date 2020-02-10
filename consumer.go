@@ -117,6 +117,8 @@ func (c *Consumer) AddQueue(q *Queue) error {
 	q.receiveMessageChan = make(chan *ReceiveMessage)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
+	q.makeContext = c.makeContext
+	q.codec = c.codec
 
 	monitor := func(e error) {
 		c.log.WithError(err).Warning("curlew")
@@ -410,8 +412,8 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		m.QueueName = queue.Name
 		m.MessageBody = body
 		m.EnqueueTime = receiveMsg.EnqueueTime
-		m.codec = queue.MakeDefaultCodecIfNone()
-		errChan <- queue.OnReceive(queue.MakeDefaultContextIfNone(m), m)
+		m.codec = queue.codec
+		errChan <- queue.OnReceive(queue.makeContext(m), m)
 	}()
 
 	go func() {

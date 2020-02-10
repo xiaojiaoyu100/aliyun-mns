@@ -23,19 +23,33 @@
 package main
 
 import (
-	"github.com/xiaojiaoyu100/aliyun-mns"
+	"context"
+     "github.com/xiaojiaoyu100/aliyun-mns"
+     "github.com/go-redis/redis"
 )
 
-func Handle1(m *alimns.M) error {
+func Handle1(ctx context.Context, m *alimns.M) error {
 	return nil
 }
 
-func Handle2(m *alimns.M) error {
+func Handle2(ctx context.Context, m *alimns.M) error {
 	return nil
 }
+
+func MakeContext(m *alimns.M) context.Context {
+    return context.TODO()
+}
+
 
 func main() {
-	client, err := alimns.NewClient(alimns.Config{
+    option := &redis.Options{
+        Addr:"127.0.0.1:6379",
+        DB:0,
+    }
+
+    redisClient := redis.NewClient(option)
+    client, err := alimns.NewClient(alimns.Config{
+        Cmdable: redisClient,
 		Endpoint: "",
 		QueuePrefix: "", // 可以留空，表示拉取全部消息队列
 		AccessKeyID: "",
@@ -44,6 +58,9 @@ func main() {
 	if err != nil {
 		return
 	}
+
+    client.SetMakeContext(MakeContext)
+
 	consumer := alimns.NewConsumer(client)
 	err = consumer.AddQueue(
 		&alimns.Queue{
@@ -57,8 +74,8 @@ func main() {
 	err = consumer.AddQueue(
 		&alimns.Queue{
 			Name:      "QueueTest2",
-			OnReceive: Handle2,
-            Backoff:   ExponentialBackoff(60, 3600), // 指数回退，1分钟起始，最长1小时
+			OnReceive: Handle2, 
+            Backoff:   alimns.ExponentialBackoff(60, 3600), // 指数回退，1分钟起始，最长1小时
 		},
 	)
 	if err != nil {

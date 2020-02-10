@@ -7,16 +7,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/xiaojiaoyu100/cast"
-
+	"context"
 	"github.com/sirupsen/logrus"
+	"github.com/xiaojiaoyu100/cast"
 )
 
 // Client 存储了阿里云的相关信息
 type Client struct {
-	config Config
-	ca     *cast.Cast
-	log    *logrus.Logger
+	config      Config
+	makeContext MakeContext
+	codec       Codec
+	ca          *cast.Cast
+	log         *logrus.Logger
 }
 
 // NewClient 返回Client的实例
@@ -47,17 +49,43 @@ func NewClient(config Config) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{
+	cli := &Client{
 		config: config,
 		ca:     c,
 		log:    log,
-	}, nil
+	}
+
+	cli.defaultCodec()
+	cli.defaultMakeContext()
+
+	return cli, nil
 }
 
 // AddLogHook add a log reporter.
 func (c *Client) AddLogHook(f LogHook) {
 	m := NewMonitor(f)
 	c.log.AddHook(m)
+}
+
+// SetMakeContext 设置环境
+func (c *Client) SetMakeContext(makeContext MakeContext) {
+	c.makeContext = makeContext
+}
+
+// DefaultMakeContextIfNone 保证makeContext不为空
+func (c *Client) defaultMakeContext() {
+	if c.makeContext == nil {
+		c.makeContext = func(m *M) context.Context {
+			return context.TODO()
+		}
+	}
+}
+
+// defaultCodec 保证codec不为空，默认是json编解码
+func (c *Client) defaultCodec() {
+	if c.codec == nil {
+		c.codec = JSONCodec{}
+	}
 }
 
 // EnableDebug enables debug info.
