@@ -410,6 +410,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		m.QueueName = queue.Name
 		m.MessageBody = body
 		m.EnqueueTime = receiveMsg.EnqueueTime
+		m.ReceiptHandle = receiveMsg.ReceiptHandle
 		errChan <- queue.OnReceive(m)
 	}()
 
