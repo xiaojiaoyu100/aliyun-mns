@@ -20,7 +20,7 @@ func (m *M) Decode(v interface{}) error {
 }
 
 // Handle 消息处理函数模板
-type Handle func(ctx context.Context, m *M) error
+type Handle func(ctx context.Context) error
 
 // Queue 消息队列
 type Queue struct {
