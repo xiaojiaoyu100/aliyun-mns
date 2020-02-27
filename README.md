@@ -28,11 +28,13 @@ import (
      "github.com/go-redis/redis"
 )
 
-func Handle1(ctx context.Context, m *alimns.M) error {
+func Handle1(ctx context.Context) error {
+    m, ok := alimns.MFrom(ctx)
 	return nil
 }
 
-func Handle2(ctx context.Context, m *alimns.M) error {
+func Handle2(ctx context.Context) error {
+    m, ok := alimns.MFrom(ctx)
 	return nil
 }
 
