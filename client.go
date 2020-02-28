@@ -75,8 +75,8 @@ func (c *Client) SetMakeContext(makeContext MakeContext) {
 // DefaultMakeContextIfNone 保证makeContext不为空
 func (c *Client) defaultMakeContext() {
 	if c.makeContext == nil {
-		c.makeContext = func(m *M) context.Context {
-			return context.TODO()
+		c.makeContext = func(m *M) (context.Context, error) {
+			return context.TODO(), nil
 		}
 	}
 }

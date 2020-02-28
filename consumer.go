@@ -414,8 +414,9 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		m.EnqueueTime = receiveMsg.EnqueueTime
 		m.codec = queue.codec
 		m.ReceiptHandle = receiveMsg.ReceiptHandle
-		ctx := queue.makeContext(m)
+		ctx, err := queue.makeContext(m)
 		ctx = context.WithValue(ctx, aliyunMnsM, m)
+		ctx = context.WithValue(ctx, aliyunMnsContextErr, err)
 		errChan <- queue.OnReceive(ctx)
 	}()
 
