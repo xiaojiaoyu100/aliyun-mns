@@ -22,6 +22,6 @@ func MFrom(ctx context.Context) (*M, bool) {
 
 // ErrFrom 拿出context error
 func ErrFrom(ctx context.Context) (*M, bool) {
-	m, ok := ctx.Value(aliyunMnsContextErr).(*M)
+	m, ok := ctx.Value(aliyunMnsContextErr).(error)
 	return m, ok
 }
