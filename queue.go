@@ -24,19 +24,20 @@ type Handle func(ctx context.Context) error
 
 // Queue 消息队列
 type Queue struct {
-	Name                  string
-	Parallel              int
-	QueueAttributeSetters []QueueAttributeSetter
-	OnReceive             Handle
-	Backoff               BackoffFunc
-	codec                 Codec
-	makeContext           MakeContext
-	isScheduled           bool
-	receiveMessageChan    chan *ReceiveMessage
-	longPollQuit          chan struct{}
-	consumeQuit           chan struct{}
-	dispatcher            *curlew.Dispatcher
-	popCount              int32
+	Name             string
+	Parallel         int
+	AttributeSetters []QueueAttributeSetter
+	codec            Codec
+	makeContext      MakeContext
+	Builder
+	clean              Clean
+	Backoff            BackoffFunc
+	isScheduled        bool
+	receiveMessageChan chan *ReceiveMessage
+	longPollQuit       chan struct{}
+	consumeQuit        chan struct{}
+	dispatcher         *curlew.Dispatcher
+	popCount           int32
 }
 
 // Stop 使消息队列拉取消息和消费消息停止
@@ -46,4 +47,22 @@ func (q *Queue) Stop() {
 		close(q.longPollQuit)
 		close(q.consumeQuit)
 	}
+}
+
+func (q *Queue) safeParallel() int {
+	if q.Parallel > maxReceiveMessage {
+		return maxReceiveMessage
+	}
+	if q.Parallel < 1 {
+		return 1
+	}
+	return q.Parallel
+}
+
+func (q *Queue) safePullNumOfMessages() int {
+	r := q.safeParallel() - int(q.popCount)
+	if r < 1 {
+		return 1
+	}
+	return r
 }

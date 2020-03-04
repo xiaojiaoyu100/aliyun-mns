@@ -16,6 +16,7 @@ import (
 type Client struct {
 	config      Config
 	makeContext MakeContext
+	clean       Clean
 	codec       Codec
 	ca          *cast.Cast
 	log         *logrus.Logger
@@ -57,6 +58,7 @@ func NewClient(config Config) (*Client, error) {
 
 	cli.defaultCodec()
 	cli.defaultMakeContext()
+	cli.defaultClean()
 
 	return cli, nil
 }
@@ -96,6 +98,17 @@ func (c *Client) EnableDebug() {
 // SetQueuePrefix sets the query param for ListQueue.
 func (c *Client) SetQueuePrefix(prefix string) {
 	c.config.QueuePrefix = prefix
+}
+
+// SetClean 消息队里善后处理函数
+func (c *Client) SetClean(clean Clean) {
+	c.clean = clean
+}
+
+func (c *Client) defaultClean() {
+	if c.clean == nil {
+		c.clean = func(ctx context.Context) {}
+	}
 }
 
 // Base64Md5 md5值用base64编码

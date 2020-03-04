@@ -92,40 +92,28 @@ func (c *Consumer) BatchListQueue() error {
 	}
 }
 
-func setParallel(parallel int) int {
-	if parallel > maxReceiveMessage {
-		return maxReceiveMessage
-	}
-	if parallel == 0 {
-		p := Parallel()
-		if p < maxReceiveMessage {
-			return p
-		}
-		return maxReceiveMessage
-	}
-	return parallel
-}
-
 // AddQueue 添加一个消息队列
 func (c *Consumer) AddQueue(q *Queue) error {
 	prefix := c.Client.config.QueuePrefix
 	if prefix != "" && !strings.HasPrefix(q.Name, prefix) {
 		return fmt.Errorf("queue name must start with %s", prefix)
 	}
+
 	var err error
-	q.Parallel = setParallel(q.Parallel)
+	q.Parallel = q.safeParallel()
+	q.codec = c.codec
+	q.makeContext = c.makeContext
+	q.clean = c.clean
 	q.receiveMessageChan = make(chan *ReceiveMessage)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
-	q.makeContext = c.makeContext
-	q.codec = c.codec
 
 	monitor := func(e error) {
 		c.log.WithError(err).Warning("curlew")
 	}
 
 	q.dispatcher, err = curlew.New(
-		curlew.WithMaxWorkerNum(q.Parallel),
+		curlew.WithMaxWorkerNum(q.safeParallel()),
 		curlew.WithMonitor(monitor),
 	)
 	if err != nil {
@@ -174,7 +162,7 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 
 				queue.Stop()
 
-				_, err := c.CreateQueue(queue.Name, queue.QueueAttributeSetters...)
+				_, err := c.CreateQueue(queue.Name, queue.AttributeSetters...)
 				switch err {
 				case nil:
 					continue
@@ -208,11 +196,11 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 					continue
 				}
 
-				if queue.Parallel <= 0 {
+				if queue.safeParallel() <= 0 {
 					continue
 				}
 
-				if queue.OnReceive == nil {
+				if len(queue.Handles()) == 0 {
 					continue
 				}
 
@@ -349,10 +337,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 				return
 			default:
 				time.Sleep(50 * time.Millisecond)
-				num := queue.Parallel - int(queue.popCount)
-				if num <= 0 {
-					num = 1
-				}
+				num := queue.safePullNumOfMessages()
 				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(num))
 				switch err {
 				case messageNotExistError:
@@ -417,7 +402,15 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		ctx, err := queue.makeContext(m)
 		ctx = context.WithValue(ctx, aliyunMnsM, m)
 		ctx = context.WithValue(ctx, aliyunMnsContextErr, err)
-		errChan <- queue.OnReceive(ctx)
+		defer queue.clean(ctx)
+		for _, handle := range queue.Handles() {
+			err = handle(ctx)
+			errChan <- err
+			if err != nil {
+				break
+			}
+		}
+
 	}()
 
 	go func() {
@@ -481,11 +474,7 @@ func TimestampInMs() int64 {
 
 // Parallel 返回并发数
 func Parallel() int {
-	p := runtime.NumCPU() * 2
-	if p > maxReceiveMessage {
-		return maxReceiveMessage
-	}
-	return p
+	return runtime.NumCPU() * 2
 }
 
 // ConsumeQueueMessage 消费消息
