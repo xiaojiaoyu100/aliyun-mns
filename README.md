@@ -24,64 +24,68 @@ package main
 
 import (
 	"context"
-     "github.com/xiaojiaoyu100/aliyun-mns"
-     "github.com/go-redis/redis"
+	"github.com/go-redis/redis"
+	"github.com/xiaojiaoyu100/aliyun-mns"
 )
 
-func Handle1(ctx context.Context) error {
-    m, ok := alimns.MFrom(ctx)
+type One struct {
+}
+
+func (o *One) handle1(ctx context.Context) error {
+	// do sth here
 	return nil
 }
 
-func Handle2(ctx context.Context) error {
-    m, ok := alimns.MFrom(ctx)
+func (o *One) handle2(ctx context.Context) error {
+	// do sth here
 	return nil
 }
 
-func MakeContext(m *alimns.M) context.Context {
-    return context.TODO()
+func (o *One) Handles() []alimns.Handle {
+	return []alimns.Handle{
+		o.handle1,
+		o.handle2,
+	}
 }
 
+func MakeContext(m *alimns.M) (context.Context, error) {
+	return context.TODO(), nil
+}
+
+func Clean(ctx context.Context) {
+}
 
 func main() {
-    option := &redis.Options{
-        Addr:"127.0.0.1:6379",
-        DB:0,
-    }
+	option := &redis.Options{
+		Addr: "127.0.0.1:6379",
+		DB:   0,
+	}
 
-    redisClient := redis.NewClient(option)
-    client, err := alimns.NewClient(alimns.Config{
-        Cmdable: redisClient,
-		Endpoint: "",
-		QueuePrefix: "", // 可以留空，表示拉取全部消息队列
-		AccessKeyID: "",
+	redisClient := redis.NewClient(option)
+	client, err := alimns.NewClient(alimns.Config{
+		Cmdable:         redisClient,
+		Endpoint:        "",
+		QueuePrefix:     "", // 可以留空，表示拉取全部消息队列
+		AccessKeyID:     "",
 		AccessKeySecret: "",
 	})
 	if err != nil {
 		return
 	}
 
-    client.SetMakeContext(MakeContext)
+	client.SetMakeContext(MakeContext)
+	client.SetClean(Clean)
 
 	consumer := alimns.NewConsumer(client)
 	err = consumer.AddQueue(
 		&alimns.Queue{
-			Name:      "QueueTest1",
-			OnReceive: Handle1,
+			Name:     "QueueTest1",
+			Parallel: alimns.Parallel(),
+			Builder:  &One{},
 		},
 	)
 	if err != nil {
 		return
-	}
-	err = consumer.AddQueue(
-		&alimns.Queue{
-			Name:      "QueueTest2",
-			OnReceive: Handle2, 
-            Backoff:   alimns.ExponentialBackoff(60, 3600), // 指数回退，1分钟起始，最长1小时
-		},
-	)
-	if err != nil {
-	    return
 	}
 	consumer.Run()
 }
