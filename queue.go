@@ -27,9 +27,9 @@ type Queue struct {
 	Name             string
 	Parallel         int
 	AttributeSetters []QueueAttributeSetter
-	codec            Codec
-	makeContext      MakeContext
 	Builder
+	codec              Codec
+	makeContext        MakeContext
 	clean              Clean
 	Backoff            BackoffFunc
 	isScheduled        bool

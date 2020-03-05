@@ -1,7 +1,7 @@
 package alimns
 
 import (
-	"encoding/json"
+	"github.com/json-iterator/go"
 )
 
 // Codec 编解码
@@ -16,10 +16,12 @@ type JSONCodec struct {
 
 // Encode 编码
 func (codec JSONCodec) Encode(value interface{}) ([]byte, error) {
-	return json.Marshal(value)
+	var j = jsoniter.ConfigCompatibleWithStandardLibrary
+	return j.Marshal(&value)
 }
 
 // Decode 解码
 func (codec JSONCodec) Decode(data []byte, value interface{}) error {
-	return json.Unmarshal(data, value)
+	var j = jsoniter.ConfigCompatibleWithStandardLibrary
+	return j.Unmarshal(data, &value)
 }

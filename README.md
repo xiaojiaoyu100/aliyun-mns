@@ -31,21 +31,9 @@ import (
 type One struct {
 }
 
-func (o *One) handle1(ctx context.Context) error {
+func (o *One) Handle(ctx context.Context) error {
 	// do sth here
 	return nil
-}
-
-func (o *One) handle2(ctx context.Context) error {
-	// do sth here
-	return nil
-}
-
-func (o *One) Handles() []alimns.Handle {
-	return []alimns.Handle{
-		o.handle1,
-		o.handle2,
-	}
 }
 
 func MakeContext(m *alimns.M) (context.Context, error) {

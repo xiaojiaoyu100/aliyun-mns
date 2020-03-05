@@ -200,7 +200,7 @@ func (c *Consumer) Schedule(createQueueReady chan struct{}) {
 					continue
 				}
 
-				if len(queue.Handles()) == 0 {
+				if queue.Builder == nil {
 					continue
 				}
 
@@ -403,14 +403,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		ctx = context.WithValue(ctx, aliyunMnsM, m)
 		ctx = context.WithValue(ctx, aliyunMnsContextErr, err)
 		defer queue.clean(ctx)
-		for _, handle := range queue.Handles() {
-			err = handle(ctx)
-			errChan <- err
-			if err != nil {
-				break
-			}
-		}
-
+		errChan <- queue.Handle(ctx)
 	}()
 
 	go func() {

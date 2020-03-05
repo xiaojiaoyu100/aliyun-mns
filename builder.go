@@ -1,6 +1,10 @@
 package alimns
 
+import (
+	"context"
+)
+
 // Builder 构造者
 type Builder interface {
-	Handles() []Handle
+	Handle(ctx context.Context) error
 }
