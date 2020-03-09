@@ -497,7 +497,7 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 					j := curlew.NewJob()
 					j.Arg = receiveMessage
 					j.Fn = func(ctx context.Context, arg interface{}) error {
-						rm := arg.(*ReceiveMessage)
+						rm := j.Arg.(*ReceiveMessage)
 						atomic.AddInt32(&queue.popCount, 1)
 						c.OnReceive(queue, rm)
 						atomic.AddInt32(&queue.popCount, -1)
