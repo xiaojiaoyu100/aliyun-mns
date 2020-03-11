@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -366,8 +365,6 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	ticker := time.NewTicker(changeVisibilityInterval)
 	tickerStop := make(chan struct{})
 
-	rwLock := sync.RWMutex{}
-
 	go func() {
 		defer func() {
 			if p := recover(); p != nil {
@@ -413,10 +410,8 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, defaultVisibilityTimeout)
 				switch {
 				case err == nil:
-					rwLock.Lock()
 					receiveMsg.ReceiptHandle = resp.ReceiptHandle
 					receiveMsg.NextVisibleTime = resp.NextVisibleTime
-					rwLock.Unlock()
 				case err == messageNotExistError, err == queueNotExistError:
 					ticker.Stop()
 					return
@@ -448,9 +443,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				}
 			}
 		default:
-			rwLock.RLock()
 			err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
-			rwLock.RUnlock()
 			if err != nil {
 				c.log.WithError(err).WithField("queue", queue.Name).Error("DeleteMessage")
 			}
