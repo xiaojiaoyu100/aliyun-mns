@@ -359,11 +359,38 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 	}()
 }
 
+func (c *Consumer) periodicallyChangeVisibility(queue *Queue, receiveMsg *ReceiveMessage) chan struct{} {
+	ticker := time.NewTicker(changeVisibilityInterval)
+	tickerStop := make(chan struct{})
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, defaultVisibilityTimeout)
+				switch {
+				case err == nil:
+					receiveMsg.ReceiptHandle = resp.ReceiptHandle
+					receiveMsg.NextVisibleTime = resp.NextVisibleTime
+				case err == messageNotExistError, err == queueNotExistError:
+					ticker.Stop()
+					return
+				default:
+					c.log.WithError(err).WithField("queue", queue.Name).Error("ChangeVisibilityTimeout")
+				}
+			case <-tickerStop:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	return tickerStop
+}
+
 // OnReceive 消息队列处理函数
 func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	errChan := make(chan error)
-	ticker := time.NewTicker(changeVisibilityInterval)
-	tickerStop := make(chan struct{})
 
 	go func() {
 		defer func() {
@@ -403,27 +430,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		errChan <- queue.Handle(ctx)
 	}()
 
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, defaultVisibilityTimeout)
-				switch {
-				case err == nil:
-					receiveMsg.ReceiptHandle = resp.ReceiptHandle
-					receiveMsg.NextVisibleTime = resp.NextVisibleTime
-				case err == messageNotExistError, err == queueNotExistError:
-					ticker.Stop()
-					return
-				default:
-					c.log.WithError(err).WithField("queue", queue.Name).Error("ChangeVisibilityTimeout")
-				}
-			case <-tickerStop:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	tickerStop := c.periodicallyChangeVisibility(queue, receiveMsg)
 
 	select {
 	case err := <-errChan:
