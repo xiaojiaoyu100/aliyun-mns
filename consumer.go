@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	changeVisibilityInterval = 5 * time.Second
+	changeVisibilityInterval = 3 * time.Second
 )
 
 // Consumer 消费者
