@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -83,7 +84,7 @@ func (c *Client) ReceiveMessage(name string, setters ...ReceiveMessageParamSette
 	requestLine := fmt.Sprintf(mnsReceiveMessage, name)
 	req := c.ca.NewRequest().Get().WithPath(requestLine).WithQueryParam(&receiveMessage)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}

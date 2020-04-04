@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -36,7 +37,7 @@ func (c *Client) BatchReceiveMessage(name string, setters ...ReceiveMessageParam
 	requestLine := fmt.Sprintf(mnsBatchReceiveMessage, name)
 	req := c.ca.NewRequest().Get().WithPath(requestLine).WithQueryParam(&receiveMessage)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}

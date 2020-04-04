@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -21,7 +22,7 @@ func (c *Client) BatchPeekMessage(name string) (*BatchPeekMessageResponse, error
 	requestLine := fmt.Sprintf(mnsBatchPeekMessage, name, "16")
 	req := c.ca.NewRequest().Get().WithPath(requestLine).WithTimeout(apiTimeout)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}

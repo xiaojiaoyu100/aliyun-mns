@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -30,7 +31,7 @@ func (c *Client) ChangeVisibilityTimeout(
 	requestLine := fmt.Sprintf(mnsChangeMessageVisibility, name, receiptHandle, strconv.Itoa(visibilityTimeout))
 	req := c.ca.NewRequest().Put().WithPath(requestLine).WithTimeout(apiTimeout)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}
