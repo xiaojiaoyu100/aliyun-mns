@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -54,7 +55,7 @@ start:
 		return nil, err
 	}
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}

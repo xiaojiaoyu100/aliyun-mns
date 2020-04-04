@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ func (c *Client) GetQueueAttributes(name string) (*QueueAttributeResponse, error
 	requestLine := fmt.Sprintf(mnsGetQueueAttributes, name)
 	req := c.ca.NewRequest().Get().WithPath(requestLine).WithTimeout(apiTimeout)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}

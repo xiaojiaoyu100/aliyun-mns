@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -38,7 +39,7 @@ func (c *Client) PublishMessage(topic, message string, setters ...PublishMessage
 	requestLine := fmt.Sprintf(mnsPublishMessage, topic)
 	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&publishMessageParam).WithTimeout(apiTimeout)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return "", err
 	}

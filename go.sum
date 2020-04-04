@@ -58,8 +58,8 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/vmihailenco/msgpack v4.0.4+incompatible h1:dSLoQfGFAo3F6OoNhwUmLwVgaUXK79GlxNBwueZn0xI=
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
-github.com/xiaojiaoyu100/cast v1.2.9 h1:hL8fiPhOnDrkToiORrBMn1XZrZyyMaqB5XVfCI1lJ3g=
-github.com/xiaojiaoyu100/cast v1.2.9/go.mod h1:smc6oedQStn3NkaLOySSku1MDWcZHKA+hZDijVyyNcs=
+github.com/xiaojiaoyu100/cast v1.3.0 h1:XoMMGSKB/jdfQ8Y83p3rf3lQjdDV5Ai1bdXP+pXbjr0=
+github.com/xiaojiaoyu100/cast v1.3.0/go.mod h1:smc6oedQStn3NkaLOySSku1MDWcZHKA+hZDijVyyNcs=
 github.com/xiaojiaoyu100/curlew v0.2.3 h1:i3S6MU3TEsR77vN34zDTYHuhGHXg7i/yDBXL0mkamGY=
 github.com/xiaojiaoyu100/curlew v0.2.3/go.mod h1:T1E4wpTXciXHO0YJPhHz8sQB/MGPLt+M7efYFKK36Hg=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=

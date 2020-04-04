@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,7 +14,7 @@ func (c *Client) DeleteMessage(name, receiptHandle string) error {
 	requestLine := fmt.Sprintf(mnsDeleteMessage, name, receiptHandle)
 	req := c.ca.NewRequest().Delete().WithPath(requestLine).WithTimeout(apiTimeout)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return err
 	}

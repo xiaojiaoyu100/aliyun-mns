@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -36,7 +37,7 @@ func (c *Client) send(name string, message Message) (*SendMessageResponse, error
 	var err error
 	requestLine := fmt.Sprintf(mnsSendMessage, name)
 	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&message)
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func (c *Client) sendMessage(name, messageBody string, setters ...MessageSetter)
 	requestLine := fmt.Sprintf(mnsSendMessage, name)
 	req := c.ca.NewRequest().Post().WithPath(requestLine).WithXMLBody(&attri)
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if shouldRetry(err) {
 		c.pushRetryQueue(name, attri)
 	}

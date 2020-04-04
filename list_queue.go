@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"net/http"
@@ -42,7 +43,7 @@ func (c *Client) ListQueue(request *ListQueueRequest) (*ListQueueResponse, error
 		req.SetHeader(xMnxPrefix, request.Prefix)
 	}
 
-	resp, err := c.ca.Do(req)
+	resp, err := c.ca.Do(context.TODO(), req)
 	if err != nil {
 		return nil, err
 	}
