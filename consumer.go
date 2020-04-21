@@ -2,8 +2,11 @@ package alimns
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"github.com/xiaojiaoyu100/lizard/redispattern/lockguard"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -161,7 +164,16 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 
 				queue.Stop()
 
+				m := md5.New()
+				m.Write([]byte(queue.Name))
+				s := hex.EncodeToString(m.Sum(nil))
+
+				guard := lockguard.New(c.config.Cmdable, fmt.Sprintf("alimns:create:queue:%s", s), lockguard.WithExpiration(3*time.Second))
+				if !guard.Lock() {
+					continue
+				}
 				_, err := c.CreateQueue(queue.Name, queue.AttributeSetters...)
+				guard.UnLock()
 				switch err {
 				case nil:
 					continue
