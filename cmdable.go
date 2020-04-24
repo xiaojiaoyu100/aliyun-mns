@@ -1,8 +1,9 @@
 package alimns
 
 import (
-	"github.com/go-redis/redis"
 	"time"
+
+	"github.com/go-redis/redis"
 )
 
 // Cmdable 封装了redis相关操作
@@ -12,4 +13,5 @@ type Cmdable interface {
 	LRem(key string, count int64, value interface{}) *redis.IntCmd
 	SetNX(key string, value interface{}, expiration time.Duration) *redis.BoolCmd
 	Eval(script string, keys []string, args ...interface{}) *redis.Cmd
+	Expire(key string, expiration time.Duration) *redis.BoolCmd
 }

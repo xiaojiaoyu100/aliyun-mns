@@ -1,7 +1,7 @@
 package alimns
 
 import (
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Codec 编解码

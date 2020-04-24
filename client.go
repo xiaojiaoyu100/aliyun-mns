@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/xiaojiaoyu100/cast"
 )
@@ -113,10 +114,19 @@ func (c *Client) defaultClean() {
 
 // Base64Md5 md5值用base64编码
 func Base64Md5(s string) (string, error) {
-	hash := md5.New()
-	_, err := io.WriteString(hash, s)
+	h, err := Md5(s)
 	if err != nil {
 		return "", err
 	}
-	return base64.StdEncoding.EncodeToString(hash.Sum(nil)), nil
+	return base64.StdEncoding.EncodeToString(h), nil
+}
+
+// Md5 md5
+func Md5(s string) ([]byte, error) {
+	hash := md5.New()
+	_, err := io.WriteString(hash, s)
+	if err != nil {
+		return nil, err
+	}
+	return hash.Sum(nil), nil
 }

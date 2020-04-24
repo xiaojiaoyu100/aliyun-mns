@@ -2,11 +2,9 @@ package alimns
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"github.com/xiaojiaoyu100/lizard/redispattern/lockguard"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -15,6 +13,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/xiaojiaoyu100/lizard/redispattern/lockguard"
 
 	"github.com/go-redis/redis"
 	"github.com/vmihailenco/msgpack"
@@ -164,22 +164,28 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 
 				queue.Stop()
 
-				m := md5.New()
-				m.Write([]byte(queue.Name))
-				s := hex.EncodeToString(m.Sum(nil))
+				h, err := Md5(queue.Name)
+				if err != nil {
+					continue
+				}
 
-				guard := lockguard.New(c.config.Cmdable, fmt.Sprintf("alimns:create:queue:%s", s), lockguard.WithExpiration(3*time.Second))
-				if !guard.Lock() {
+				s := hex.EncodeToString(h)
+
+				guard, err := lockguard.New(c.config.Cmdable, fmt.Sprintf("alimns:create:queue:%s", s))
+				if err != nil {
+					c.log.WithError(err).Warnf("generate lock")
 					continue
 				}
-				_, err := c.CreateQueue(queue.Name, queue.AttributeSetters...)
-				guard.UnLock()
-				switch err {
-				case nil:
-					continue
-				case createQueueConflictError, unknownError:
-					c.log.WithError(err).Warn("CreateQueue")
-				}
+
+				_ = guard.Run(context.TODO(), func(ctx context.Context) {
+					_, err := c.CreateQueue(queue.Name, queue.AttributeSetters...)
+					switch err {
+					case nil:
+					case createQueueConflictError, unknownError:
+						c.log.WithError(err).Warn("CreateQueue")
+					}
+				})
+
 			}
 			createQueueReady <- struct{}{}
 		}
