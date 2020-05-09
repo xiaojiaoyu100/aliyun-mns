@@ -15,13 +15,8 @@ const (
 type MakeContext func(m *M) (context.Context, error)
 
 // MFrom 拿出message
-func MFrom(ctx context.Context) *M {
+func MFrom(ctx context.Context) (*M, error) {
 	m, _ := ctx.Value(aliyunMnsM).(*M)
-	return m
-}
-
-// ErrFrom 拿出context error
-func ErrFrom(ctx context.Context) error {
-	m, _ := ctx.Value(aliyunMnsContextErr).(error)
-	return m
+	err, _ := ctx.Value(aliyunMnsContextErr).(error)
+	return m, err
 }
