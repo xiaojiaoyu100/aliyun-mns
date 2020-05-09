@@ -2,6 +2,7 @@ package alimns
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/xiaojiaoyu100/curlew"
 )
@@ -53,10 +54,17 @@ func (q *Queue) safeParallel() int {
 	if q.Parallel > maxReceiveMessage {
 		return maxReceiveMessage
 	}
-	if q.Parallel < 1 {
-		return 1
+	if q.Parallel >= 1 && q.Parallel <= maxReceiveMessage {
+		return q.Parallel
 	}
-	return q.Parallel
+	n := runtime.NumCPU() * 2
+	switch {
+	case n > maxReceiveMessage:
+		n = maxReceiveMessage
+	case n <= 0:
+		n = 1
+	}
+	return n
 }
 
 func (q *Queue) safePullNumOfMessages() int {

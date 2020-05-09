@@ -32,8 +32,15 @@ type One struct {
 }
 
 func (o *One) Handle(ctx context.Context) error {
-	// do sth here
-	return nil
+        //return alimns.TransientError{
+	//	Err:  err
+	//}
+	//return alimns.BackoffError{
+	//	Err:  err,
+	//	N:  30,
+	//}
+	//return err 
+	//return nil  
 }
 
 func MakeContext(m *alimns.M) (context.Context, error) {
@@ -68,7 +75,6 @@ func main() {
 	err = consumer.AddQueue(
 		&alimns.Queue{
 			Name:     "QueueTest1",
-			Parallel: alimns.Parallel(),
 			Builder:  &One{},
 		},
 	)

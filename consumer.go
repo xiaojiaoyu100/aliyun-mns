@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -537,11 +536,6 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 // TimestampInMs 毫秒时间戳
 func TimestampInMs() int64 {
 	return time.Now().UnixNano() / 1000000
-}
-
-// Parallel 返回并发数
-func Parallel() int {
-	return runtime.NumCPU() * 2
 }
 
 // ConsumeQueueMessage 消费消息
