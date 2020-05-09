@@ -32,7 +32,6 @@ type Queue struct {
 	codec              Codec
 	makeContext        MakeContext
 	clean              Clean
-	Backoff            BackoffFunc
 	isScheduled        bool
 	receiveMessageChan chan *ReceiveMessage
 	longPollQuit       chan struct{}

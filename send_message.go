@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.uber.org/zap"
+
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -27,9 +29,9 @@ func (c *Client) sendBase64EncodedJSONMessage(name string, body interface{}, set
 	if err != nil {
 		return nil, err
 	}
-	c.log.WithField("queue", name).WithField("body", body).Info("sendBase64EncodedJSONMessage")
+	c.logger.Info("sendBase64EncodedJSONMessage", zap.String("queue", name), zap.String("body", string(b)))
 	b64Body := base64.StdEncoding.EncodeToString(b)
-	c.log.WithField("queue", name).WithField("b64body", b64Body).Info("sendBase64EncodedJSONMessage")
+	c.logger.Info("sendBase64EncodedJSONMessage", zap.String("queue", name), zap.String("b64body", b64Body))
 	return c.sendMessage(name, b64Body, setters...)
 }
 
@@ -75,13 +77,13 @@ func (c *Client) pushRetryQueue(name string, message Message) {
 
 	b, err := msgpack.Marshal(w)
 	if err != nil {
-		c.log.WithError(err).Errorf("msgpack.Marshal: %v", w)
+		c.logger.Error(fmt.Sprintf("msgpack.Marshal: %v", w), zap.Error(err))
 		return
 	}
 
 	_, err = c.config.RPush(aliyunMnsRetryQueue, string(b)).Result()
 	if err != nil {
-		c.log.WithError(err).Errorf("RPush: %s", b)
+		c.logger.Error(fmt.Sprintf("RPush: %s", b), zap.Error(err))
 		return
 	}
 }

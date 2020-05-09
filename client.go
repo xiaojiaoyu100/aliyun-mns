@@ -4,8 +4,11 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"io"
-	"os"
 	"time"
+
+	"go.uber.org/zap/zapcore"
+
+	"go.uber.org/zap"
 
 	"context"
 
@@ -20,24 +23,40 @@ type Client struct {
 	clean       Clean
 	codec       Codec
 	ca          *cast.Cast
-	log         *logrus.Logger
+	logger      *zap.Logger
 }
 
 // NewClient 返回Client的实例
 func NewClient(config Config) (*Client, error) {
+	zc := &zap.Config{
+		Level:       zap.NewAtomicLevelAt(zapcore.WarnLevel),
+		Development: false,
+		Sampling: &zap.SamplingConfig{
+			Initial:    100,
+			Thereafter: 100,
+		},
+		Encoding: "json",
+		EncoderConfig: zapcore.EncoderConfig{
+			TimeKey:        "time",
+			LevelKey:       "level",
+			NameKey:        "logger",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			StacktraceKey:  "stacktrace",
+			LineEnding:     zapcore.DefaultLineEnding,
+			EncodeLevel:    zapcore.LowercaseLevelEncoder,
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.SecondsDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
+		},
+		OutputPaths:      []string{"stderr"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
 
-	level := logrus.WarnLevel
-
-	log := logrus.New()
-	log.WithFields(logrus.Fields{
-		"source": "alimns",
-	})
-	log.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-	})
-	log.SetReportCaller(true)
-	log.SetOutput(os.Stdout)
-	log.SetLevel(level)
+	logger, err := zc.Build()
+	if err != nil {
+		return nil, err
+	}
 
 	c, err := cast.New(
 		cast.WithHTTPClientTimeout(40*time.Second),
@@ -45,7 +64,7 @@ func NewClient(config Config) (*Client, error) {
 		cast.AddRequestHook(withAuth(config.AccessKeyID, config.AccessKeySecret)),
 		cast.WithRetry(3),
 		cast.WithConstantBackoffStrategy(time.Millisecond*100),
-		cast.WithLogLevel(level),
+		cast.WithLogLevel(logrus.WarnLevel),
 	)
 	if err != nil {
 		return nil, err
@@ -54,7 +73,7 @@ func NewClient(config Config) (*Client, error) {
 	cli := &Client{
 		config: config,
 		ca:     c,
-		log:    log,
+		logger: logger,
 	}
 
 	cli.defaultCodec()
@@ -66,8 +85,10 @@ func NewClient(config Config) (*Client, error) {
 
 // AddLogHook add a log reporter.
 func (c *Client) AddLogHook(f LogHook) {
-	m := NewMonitor(f)
-	c.log.AddHook(m)
+	c.logger = c.logger.WithOptions(zap.Hooks(func(entry zapcore.Entry) error {
+		f(entry)
+		return nil
+	}))
 }
 
 // SetMakeContext 设置环境
@@ -93,7 +114,7 @@ func (c *Client) defaultCodec() {
 
 // EnableDebug enables debug info.
 func (c *Client) EnableDebug() {
-	c.log.SetLevel(logrus.DebugLevel)
+	c.logger.Core().Enabled(zap.DebugLevel)
 }
 
 // SetQueuePrefix sets the query param for ListQueue.

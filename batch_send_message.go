@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // SendMessage 发送消息
@@ -79,7 +81,7 @@ start:
 			case internalError.Error():
 				retryIdx = append(retryIdx, idx)
 			default:
-				c.log.WithField("err", err).WithField("body", string(body)).Error("批量发送消息部分失败")
+				c.logger.Error("批量发送消息部分失败", zap.Error(err), zap.String("body", string(body)))
 			}
 		}
 		if len(retryIdx) == 0 {

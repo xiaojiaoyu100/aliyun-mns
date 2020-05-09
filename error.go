@@ -102,8 +102,8 @@ func shouldRetry(err error) bool {
 	return IsInternalError(err) || cast.ShouldRetry(err)
 }
 
-type transientError interface {
-	error
+// Transient 短时间的错误，一般分钟级
+type Transient interface {
 	// Transient returns whether the error is transient, if returns true, the handler error will not be reported in a
 	// short period of time.
 	Transient() bool
@@ -121,5 +121,40 @@ func (err TransientError) Transient() bool {
 
 // Error implements the error interface.
 func (err TransientError) Error() string {
+	return err.Err.Error()
+}
+
+// Unwrap get the underlying error.
+func (err TransientError) Unwrap() error {
+	return err.Err
+}
+
+// Backoff backoff
+type Backoff interface {
+	Backoff() int
+}
+
+// BackoffError represents the backoff error.
+type BackoffError struct {
+	Err error
+	// visibility timeout
+	N int
+}
+
+// Backoff returns the message visibility time.
+func (err BackoffError) Backoff() int {
+	if err.N < minVisibilityTimeout || err.N > maxVisibilityTimeout {
+		return minVisibilityTimeout
+	}
+	return err.N
+}
+
+// Unwrap get the underlying error.
+func (err BackoffError) Unwrap() error {
+	return err.Err
+}
+
+// Error implements the error interface.
+func (err BackoffError) Error() string {
 	return err.Err.Error()
 }

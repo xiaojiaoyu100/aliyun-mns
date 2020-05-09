@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/xiaojiaoyu100/lizard/redispattern/lockguard"
 
@@ -111,7 +114,7 @@ func (c *Consumer) AddQueue(q *Queue) error {
 	q.consumeQuit = make(chan struct{})
 
 	monitor := func(e error) {
-		c.log.WithError(err).Warning("curlew")
+
 	}
 
 	q.dispatcher, err = curlew.New(
@@ -133,7 +136,7 @@ func (c *Consumer) PeriodicallyFetchQueues() chan struct{} {
 	go func() {
 		err := c.BatchListQueue()
 		if err != nil {
-			c.log.WithError(err).Warning("BatchListQueue")
+			c.logger.Warn("BatchListQueue", zap.Error(err))
 		} else {
 			fetchQueueReady <- struct{}{}
 		}
@@ -141,7 +144,7 @@ func (c *Consumer) PeriodicallyFetchQueues() chan struct{} {
 		for range ticker.C {
 			err := c.BatchListQueue()
 			if err != nil {
-				c.log.WithError(err).Warning("BatchListQueue")
+				c.logger.Warn("BatchListQueue", zap.Error(err))
 				continue
 			} else {
 				fetchQueueReady <- struct{}{}
@@ -173,7 +176,7 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 
 				guard, err := lockguard.New(c.config.Cmdable, fmt.Sprintf("alimns:create:queue:%s", s))
 				if err != nil {
-					c.log.WithError(err).Warnf("generate lock")
+					c.logger.Warn("generate lock", zap.Error(err))
 					continue
 				}
 
@@ -182,7 +185,7 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 					switch err {
 					case nil:
 					case createQueueConflictError, unknownError:
-						c.log.WithError(err).Warn("CreateQueue")
+						c.logger.Warn("CreateQueue", zap.Error(err))
 					}
 				})
 
@@ -239,7 +242,7 @@ func (c *Consumer) Run() {
 	c.retrySendMessage()
 	c.gracefulShutdown()
 	<-c.shutdown
-	c.log.Debugln("Consumer is closed!")
+	c.logger.Debug("Consumer is closed!")
 }
 
 // PopCount means the current number of running handlers.
@@ -292,19 +295,19 @@ func (c *Consumer) retrySendMessage() {
 
 			err = msgpack.Unmarshal([]byte(value), w)
 			if err != nil {
-				c.log.WithError(err).Errorf("msgpack.Unmarshal: %s", value)
+				c.logger.Error(fmt.Sprintf("msgpack.Unmarshal: %s", value), zap.Error(err))
 				continue
 			}
 
 			_, err = c.send(w.QueueName, w.Message)
 			if err != nil {
-				c.log.WithError(err).Errorf("send: %s, %v", w.QueueName, w.Message)
+				c.logger.Error(fmt.Sprintf("send: %s, %v", w.QueueName, w.Message), zap.Error(err))
 				continue
 			}
 
 			_, err = c.config.LRem(aliyunMnsProcessingQueue, 1, value).Result()
 			if err != nil {
-				c.log.WithError(err).Error("LRem")
+				c.logger.Error("LRem", zap.Error(err))
 			}
 		}
 	}()
@@ -315,7 +318,7 @@ func (c *Consumer) gracefulShutdown() {
 	signal.Notify(gracefulStop, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-gracefulStop
-		c.log.WithField("signal", sig.String()).Debug("Accepting an os signal...")
+		c.logger.Debug("Accepting an os signal...", zap.String("signal", sig.String()))
 
 		c.isClosed = true
 		for _, queue := range c.queues {
@@ -328,14 +331,14 @@ func (c *Consumer) gracefulShutdown() {
 		for {
 			select {
 			case <-doom.C:
-				c.log.WithField("count", c.PopCount()).Debugln("timeout shutdown")
+				c.logger.Debug("timeout shutdown", zap.Int32("count", c.PopCount()))
 				close(c.shutdown)
 				return
 			case <-check.C:
 				popCount := c.PopCount()
-				c.log.WithField("count", popCount).Debug("check")
+				c.logger.Debug("check", zap.Int32("count", popCount))
 				if popCount == 0 {
-					c.log.Debugln("graceful shutdown")
+					c.logger.Debug("graceful shutdown")
 					close(c.shutdown)
 					return
 				}
@@ -350,7 +353,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 		for {
 			select {
 			case <-queue.longPollQuit:
-				c.log.WithField("queue", queue.Name).Debug("long poll quit")
+				c.logger.Debug("long poll quit", zap.String("queue", queue.Name))
 				return
 			default:
 				time.Sleep(50 * time.Millisecond)
@@ -365,7 +368,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 					queue.Stop()
 					fallthrough
 				default:
-					c.log.WithError(err).Warn("BatchReceiveMessage")
+					c.logger.Warn("BatchReceiveMessage", zap.Error(err))
 					continue
 				}
 
@@ -394,7 +397,13 @@ func (c *Consumer) periodicallyChangeVisibility(queue *Queue, receiveMsg *Receiv
 					ticker.Stop()
 					return
 				default:
-					c.log.WithError(err).WithField("queue", queue.Name).Error("ChangeVisibilityTimeout")
+					c.logger.Error("ChangeVisibilityTimeout",
+						zap.Error(err),
+						zap.String("queue", queue.Name),
+						zap.String("body", receiveMsg.MessageBody),
+						zap.String("message_id", receiveMsg.MessageID),
+						zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+					)
 				}
 			case <-tickerStop:
 				ticker.Stop()
@@ -410,10 +419,18 @@ func (c *Consumer) periodicallyChangeVisibility(queue *Queue, receiveMsg *Receiv
 func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	errChan := make(chan error)
 
+	tickerStop := c.periodicallyChangeVisibility(queue, receiveMsg)
+
 	go func() {
 		defer func() {
 			if p := recover(); p != nil {
-				c.log.WithField("err", p).WithField("queue", queue.Name).Error("消息处理函数崩溃")
+				e, _ := p.(error)
+				c.logger.Error("消息处理函数崩溃", zap.Error(e),
+					zap.String("queue", queue.Name),
+					zap.String("body", receiveMsg.MessageBody),
+					zap.String("message_id", receiveMsg.MessageID),
+					zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+				)
 				errChan <- handleCrashError
 			}
 		}()
@@ -422,19 +439,20 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		if IsBase64(receiveMsg.MessageBody) {
 			b64bytes, err := base64.StdEncoding.DecodeString(receiveMsg.MessageBody)
 			if err != nil {
-				c.log.WithError(err).WithField("queue", queue.Name).Error("尝试解析消息体失败(base64.StdEncoding)")
+				c.logger.Error("尝试解析消息体失败(base64.StdEncoding)", zap.Error(err), zap.String("queue", queue.Name))
 			}
 			body = string(b64bytes)
 		} else {
 			body = receiveMsg.MessageBody
 		}
 		if receiveMsg.DequeueCount > dequeueCount {
-			c.log.WithField("queue", queue.Name).
-				WithField("message_id", receiveMsg.MessageID).
-				WithField("receipt_handle", receiveMsg.ReceiptHandle).
-				WithField("body", body).
-				WithField("count", receiveMsg.DequeueCount).
-				Error("The message is dequeued many times.")
+			c.logger.Error("The message is dequeued many times.",
+				zap.String("queue", queue.Name),
+				zap.String("message_id", receiveMsg.MessageID),
+				zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+				zap.String("body", body),
+				zap.Int("count", receiveMsg.DequeueCount),
+			)
 		}
 		m.QueueName = queue.Name
 		m.MessageBody = body
@@ -444,11 +462,14 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		ctx, err := queue.makeContext(m)
 		ctx = context.WithValue(ctx, aliyunMnsM, m)
 		ctx = context.WithValue(ctx, aliyunMnsContextErr, err)
-		defer queue.clean(ctx)
+		defer func() {
+			if queue.clean == nil {
+				return
+			}
+			queue.clean(ctx)
+		}()
 		errChan <- queue.Handle(ctx)
 	}()
-
-	tickerStop := c.periodicallyChangeVisibility(queue, receiveMsg)
 
 	select {
 	case err := <-errChan:
@@ -457,20 +478,55 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		case IsHandleCrash(err):
 			// 这里不报警
 		case err != nil:
-			t, ok := err.(transientError)
-			if (ok && t.Transient() && receiveMsg.DequeueCount > dequeueCount) || !ok {
-				c.log.WithError(err).WithField("queue", queue.Name).Error("OnReceive")
-			}
-			if queue.Backoff != nil {
-				_, err = c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, queue.Backoff(receiveMsg))
-				if err != nil {
-					c.log.WithError(err).WithField("queue", queue.Name).Error("ChangeVisibilityTimeout")
+			switch {
+			case errors.As(err, &TransientError{}):
+				t, ok := err.(Transient)
+				if (ok && t.Transient() && receiveMsg.DequeueCount > dequeueCount) || !ok {
+					c.logger.Error("OnReceive",
+						zap.String("queue", queue.Name),
+						zap.Error(err))
+				}
+			case errors.As(err, &BackoffError{}):
+				b, ok := err.(Backoff)
+				if ok {
+					resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, b.Backoff())
+					c.logger.Error("ChangeVisibilityTimeout",
+						zap.String("queue", queue.Name),
+						zap.Error(err),
+						zap.String("message_id", receiveMsg.MessageID),
+						zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+						zap.String("body", receiveMsg.MessageBody),
+					)
+					if err != nil {
+						c.logger.Error("ChangeVisibilityTimeout",
+							zap.String("queue", queue.Name),
+							zap.Error(err),
+							zap.String("message_id", receiveMsg.MessageID),
+							zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+							zap.String("body", receiveMsg.MessageBody),
+						)
+					} else {
+						c.logger.Debug(fmt.Sprintf("CurrentVisibleTime = %d, NextVisibleTime=%d", receiveMsg.NextVisibleTime, resp.NextVisibleTime),
+							zap.String("queue", queue.Name),
+							zap.String("message_id", receiveMsg.MessageID),
+							zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+							zap.String("body", receiveMsg.MessageBody),
+						)
+						receiveMsg.NextVisibleTime = resp.NextVisibleTime
+						receiveMsg.ReceiptHandle = resp.ReceiptHandle
+					}
 				}
 			}
 		default:
 			err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
 			if err != nil {
-				c.log.WithError(err).WithField("queue", queue.Name).Error("DeleteMessage")
+				c.logger.Error("DeleteMessage",
+					zap.String("queue", queue.Name),
+					zap.Error(err),
+					zap.String("message_id", receiveMsg.MessageID),
+					zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+					zap.String("body", receiveMsg.MessageBody),
+				)
 			}
 		}
 	case <-time.After(10 * time.Hour):
@@ -496,7 +552,7 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 			case receiveMessage := <-queue.receiveMessageChan:
 				{
 					if receiveMessage.NextVisibleTime < TimestampInMs() {
-						c.log.WithField("queue", queue.Name).WithField("body", receiveMessage.MessageBody).Warning("Messages are stacked.")
+						c.logger.Warn("Messages are stacked.", zap.String("queue", queue.Name), zap.String("body", receiveMessage.MessageBody))
 						continue
 					}
 
@@ -512,7 +568,7 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 					queue.dispatcher.Submit(j)
 				}
 			case <-queue.consumeQuit:
-				c.log.WithField("queue", queue.Name).Debug("Consumer quit")
+				c.logger.Debug("Consumer quit", zap.String("queue", queue.Name))
 				return
 			}
 		}
