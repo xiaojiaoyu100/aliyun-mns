@@ -79,8 +79,8 @@ github.com/xiaojiaoyu100/cast v1.3.0 h1:XoMMGSKB/jdfQ8Y83p3rf3lQjdDV5Ai1bdXP+pXb
 github.com/xiaojiaoyu100/cast v1.3.0/go.mod h1:smc6oedQStn3NkaLOySSku1MDWcZHKA+hZDijVyyNcs=
 github.com/xiaojiaoyu100/curlew v0.2.3 h1:i3S6MU3TEsR77vN34zDTYHuhGHXg7i/yDBXL0mkamGY=
 github.com/xiaojiaoyu100/curlew v0.2.3/go.mod h1:T1E4wpTXciXHO0YJPhHz8sQB/MGPLt+M7efYFKK36Hg=
-github.com/xiaojiaoyu100/lizard v0.1.0 h1:pfcH427ZFbjXj0FGmliIoB0BycDBSkUsk1gcKrauM+k=
-github.com/xiaojiaoyu100/lizard v0.1.0/go.mod h1:rcSF9xN2Om1GhJ7YWvkS3WIxZr8Y0iIMk/Ie+20dK3s=
+github.com/xiaojiaoyu100/lizard v0.1.2 h1:5ANuPyxADX2WKiKZVWLyXPgJbj0yUUrNgMxGarFTfos=
+github.com/xiaojiaoyu100/lizard v0.1.2/go.mod h1:rcSF9xN2Om1GhJ7YWvkS3WIxZr8Y0iIMk/Ie+20dK3s=
 go.uber.org/atomic v1.6.0 h1:Ezj3JGmsOnG1MoRWQkPBsKLe9DwWD9QeXzTRzzldNVk=
 go.uber.org/atomic v1.6.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=
 go.uber.org/multierr v1.5.0 h1:KCa4XfM8CWFCpxXRGok+Q0SS/0XBhMDbHHGABQLvD2A=

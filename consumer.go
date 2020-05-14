@@ -179,15 +179,15 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 					continue
 				}
 
-				_ = guard.Run(context.TODO(), func(ctx context.Context) {
+				err = guard.Run(context.TODO(), func(ctx context.Context) error {
 					_, err := c.CreateQueue(queue.Name, queue.AttributeSetters...)
-					switch err {
-					case nil:
-					case createQueueConflictError, unknownError:
-						c.logger.Warn("CreateQueue", zap.Error(err))
-					}
+					return err
 				})
-
+				switch err {
+				case nil:
+				case createQueueConflictError, unknownError:
+					c.logger.Warn("CreateQueue", zap.Error(err))
+				}
 			}
 			createQueueReady <- struct{}{}
 		}
