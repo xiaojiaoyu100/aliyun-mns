@@ -450,7 +450,6 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				zap.String("message_id", receiveMsg.MessageID),
 				zap.String("receipt_handle", receiveMsg.ReceiptHandle),
 				zap.String("body", body),
-				zap.Int("count", receiveMsg.DequeueCount),
 			)
 		}
 		m.QueueName = queue.Name
@@ -478,24 +477,10 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 			// 这里不报警
 		case err != nil:
 			switch {
-			case errors.As(err, &TransientError{}):
-				t, ok := err.(Transient)
-				if (ok && t.Transient() && receiveMsg.DequeueCount > dequeueCount) || !ok {
-					c.logger.Error("OnReceive",
-						zap.String("queue", queue.Name),
-						zap.Error(err))
-				}
 			case errors.As(err, &BackoffError{}):
 				b, ok := err.(Backoff)
 				if ok {
 					resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, b.Backoff())
-					c.logger.Error("ChangeVisibilityTimeout",
-						zap.String("queue", queue.Name),
-						zap.Error(err),
-						zap.String("message_id", receiveMsg.MessageID),
-						zap.String("receipt_handle", receiveMsg.ReceiptHandle),
-						zap.String("body", receiveMsg.MessageBody),
-					)
 					if err != nil {
 						c.logger.Error("ChangeVisibilityTimeout",
 							zap.String("queue", queue.Name),

@@ -25,7 +25,7 @@ package main
 import (
 	"context"
 	"github.com/go-redis/redis"
-	"github.com/xiaojiaoyu100/aliyun-mns"
+	"github.com/xiaojiaoyu100/aliyun-mns/v2"
 )
 
 type One struct {
