@@ -14,14 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/xiaojiaoyu100/lizard/redispattern/lockguard"
-
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	"github.com/vmihailenco/msgpack"
-
 	"github.com/xiaojiaoyu100/curlew"
+	"github.com/xiaojiaoyu100/lizard/redispattern/lockguard"
+	"go.uber.org/zap"
 )
 
 const (
