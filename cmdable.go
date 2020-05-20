@@ -3,7 +3,7 @@ package alimns
 import (
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 )
 
 // Cmdable 封装了redis相关操作

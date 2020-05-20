@@ -24,7 +24,7 @@ package main
 
 import (
 	"context"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	"github.com/xiaojiaoyu100/aliyun-mns/v2"
 )
 
