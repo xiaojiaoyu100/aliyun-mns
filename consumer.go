@@ -510,7 +510,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				)
 			}
 		}
-	case <-time.After(10 * time.Hour):
+	case <-time.After(24 * time.Hour):
 		close(tickerStop)
 	}
 }
