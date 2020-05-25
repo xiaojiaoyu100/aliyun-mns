@@ -1,16 +1,13 @@
 package alimns
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"io"
 	"time"
 
-	"go.uber.org/zap/zapcore"
-
 	"go.uber.org/zap"
-
-	"context"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xiaojiaoyu100/cast"
@@ -28,32 +25,7 @@ type Client struct {
 
 // NewClient 返回Client的实例
 func NewClient(config Config) (*Client, error) {
-	zc := &zap.Config{
-		Level:       zap.NewAtomicLevelAt(zapcore.WarnLevel),
-		Development: false,
-		Sampling: &zap.SamplingConfig{
-			Initial:    100,
-			Thereafter: 100,
-		},
-		Encoding: "json",
-		EncoderConfig: zapcore.EncoderConfig{
-			TimeKey:        "time",
-			LevelKey:       "level",
-			NameKey:        "logger",
-			CallerKey:      "caller",
-			MessageKey:     "msg",
-			StacktraceKey:  "stacktrace",
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.LowercaseLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.SecondsDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-		},
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-
-	logger, err := zc.Build()
+	logger, err := NewLogger()
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +56,8 @@ func NewClient(config Config) (*Client, error) {
 }
 
 // AddLogHook add a log reporter.
-func (c *Client) AddLogHook(f LogHook) {
-	c.logger = c.logger.WithOptions(zap.Hooks(func(entry zapcore.Entry) error {
-		f(entry)
-		return nil
-	}))
+func (c *Client) AddLogHook(f func(entry Entry) error) {
+	c.logger = c.logger.WithOptions(Hooks(f))
 }
 
 // SetMakeContext 设置环境
