@@ -1,6 +1,7 @@
 package alimns
 
 import (
+	"encoding/json"
 	"time"
 
 	"go.uber.org/multierr"
@@ -33,6 +34,21 @@ func Hooks(hooks ...func(entry Entry) error) zap.Option {
 	return zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 		return registerHooksWithErrField(core, hooks...)
 	})
+}
+
+func DefaultHook(callback func(entryJson string, fieldsJson string)) func(entry Entry) error {
+	return func(en Entry) error {
+		if en.Level < zapcore.WarnLevel {
+			return nil
+		}
+		b, err := json.Marshal(&en)
+		if err != nil {
+			return err
+		}
+		callback(string(b), en.FieldsJson)
+		return nil
+	}
+
 }
 
 func NewEntryFromZapEntry(ent zapcore.Entry) Entry {
