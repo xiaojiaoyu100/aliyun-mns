@@ -352,8 +352,14 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 				c.logger.Debug("long poll quit", zap.String("queue", queue.Name))
 				return
 			default:
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(time.Duration(randomIntInRange(10, 101)) * time.Millisecond)
+
+				if queue.PullWait && queue.busy() {
+					continue
+				}
+
 				num := queue.safePullNumOfMessages()
+
 				resp, err := c.BatchReceiveMessage(queue.Name, WithReceiveMessageNumOfMessages(num))
 				switch err {
 				case messageNotExistError:

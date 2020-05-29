@@ -30,6 +30,7 @@ type Queue struct {
 	Parallel         int
 	AttributeSetters []QueueAttributeSetter
 	Builder
+	PullWait           bool // 等消息消費完再去拉取消息
 	codec              Codec
 	makeContext        MakeContext
 	clean              Clean
@@ -65,6 +66,10 @@ func (q *Queue) safeParallel() int {
 		n = 1
 	}
 	return n
+}
+
+func (q *Queue) busy() bool {
+	return q.safeParallel() <= int(q.popCount)
 }
 
 func (q *Queue) safePullNumOfMessages() int {
