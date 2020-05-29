@@ -32,9 +32,6 @@ type One struct {
 }
 
 func (o *One) Handle(ctx context.Context) error {
-        //return alimns.TransientError{
-	//	Err:  err
-	//}
 	//return alimns.BackoffError{
 	//	Err:  err,
 	//	N:  30,
