@@ -28,10 +28,10 @@ import (
 	"github.com/xiaojiaoyu100/aliyun-mns/v2"
 )
 
-type One struct {
+type Builder struct {
 }
 
-func (o *One) Handle(ctx context.Context) error {
+func (b *Builder) Handle(ctx context.Context) error {
 	//return alimns.BackoffError{
 	//	Err:  err,
 	//	N:  30,
@@ -40,11 +40,11 @@ func (o *One) Handle(ctx context.Context) error {
 	//return nil  
 }
 
-func MakeContext(m *alimns.M) (context.Context, error) {
+func Before(m *alimns.M) (context.Context, error) {
 	return context.TODO(), nil
 }
 
-func Clean(ctx context.Context) {
+func After(ctx context.Context) {
 }
 
 func main() {
@@ -65,14 +65,14 @@ func main() {
 		return
 	}
 
-	client.SetMakeContext(MakeContext)
-	client.SetClean(Clean)
+	client.SetBefore(Before)
+	client.SetAfter(After)
 
 	consumer := alimns.NewConsumer(client)
 	err = consumer.AddQueue(
 		&alimns.Queue{
 			Name:     "QueueTest1",
-			Builder:  &One{},
+			Builder:  &Builder{},
 		},
 	)
 	if err != nil {
