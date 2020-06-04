@@ -15,12 +15,12 @@ import (
 
 // Client 存储了阿里云的相关信息
 type Client struct {
-	config      Config
-	makeContext MakeContext
-	clean       Clean
-	codec       Codec
-	ca          *cast.Cast
-	logger      *zap.Logger
+	config Config
+	before Before
+	after  After
+	codec  Codec
+	ca     *cast.Cast
+	logger *zap.Logger
 }
 
 // NewClient 返回Client的实例
@@ -61,14 +61,14 @@ func (c *Client) AddLogHook(f func(entry Entry) error) {
 }
 
 // SetMakeContext 设置环境
-func (c *Client) SetMakeContext(makeContext MakeContext) {
-	c.makeContext = makeContext
+func (c *Client) SetMakeContext(before Before) {
+	c.before = before
 }
 
 // DefaultMakeContextIfNone 保证makeContext不为空
 func (c *Client) defaultMakeContext() {
-	if c.makeContext == nil {
-		c.makeContext = func(m *M) (context.Context, error) {
+	if c.before == nil {
+		c.before = func(m *M) (context.Context, error) {
 			return context.TODO(), nil
 		}
 	}
@@ -92,13 +92,13 @@ func (c *Client) SetQueuePrefix(prefix string) {
 }
 
 // SetClean 消息队里善后处理函数
-func (c *Client) SetClean(clean Clean) {
-	c.clean = clean
+func (c *Client) SetClean(after After) {
+	c.after = after
 }
 
 func (c *Client) defaultClean() {
-	if c.clean == nil {
-		c.clean = func(ctx context.Context) {}
+	if c.after == nil {
+		c.after = func(ctx context.Context) {}
 	}
 }
 

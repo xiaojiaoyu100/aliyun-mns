@@ -32,8 +32,8 @@ type Queue struct {
 	Builder
 	PullWait           bool // 等消息消費完再去拉取消息
 	codec              Codec
-	makeContext        MakeContext
-	clean              Clean
+	before             Before
+	after              After
 	isScheduled        bool
 	receiveMessageChan chan *ReceiveMessage
 	longPollQuit       chan struct{}

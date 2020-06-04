@@ -11,8 +11,8 @@ const (
 	aliyunMnsContextErr contextKey = 2
 )
 
-// MakeContext 生成一个context
-type MakeContext func(m *M) (context.Context, error)
+// Before 生成一个context
+type Before func(m *M) (context.Context, error)
 
 // MFrom 拿出message
 func MFrom(ctx context.Context) (*M, error) {

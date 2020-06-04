@@ -103,8 +103,8 @@ func (c *Consumer) AddQueue(q *Queue) error {
 	var err error
 	q.Parallel = q.safeParallel()
 	q.codec = c.codec
-	q.makeContext = c.makeContext
-	q.clean = c.clean
+	q.before = c.before
+	q.after = c.after
 	q.receiveMessageChan = make(chan *ReceiveMessage)
 	q.longPollQuit = make(chan struct{})
 	q.consumeQuit = make(chan struct{})
@@ -460,14 +460,14 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		m.EnqueueTime = receiveMsg.EnqueueTime
 		m.codec = queue.codec
 		m.ReceiptHandle = receiveMsg.ReceiptHandle
-		ctx, err := queue.makeContext(m)
+		ctx, err := queue.before(m)
 		ctx = context.WithValue(ctx, aliyunMnsM, m)
 		ctx = context.WithValue(ctx, aliyunMnsContextErr, err)
 		defer func() {
-			if queue.clean == nil {
+			if queue.after == nil {
 				return
 			}
-			queue.clean(ctx)
+			queue.after(ctx)
 		}()
 		errChan <- queue.Handle(ctx)
 	}()
