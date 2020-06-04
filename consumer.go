@@ -463,13 +463,15 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		ctx, err := queue.before(m)
 		ctx = context.WithValue(ctx, aliyunMnsM, m)
 		ctx = context.WithValue(ctx, aliyunMnsContextErr, err)
+		err = queue.Handle(ctx)
 		defer func() {
 			if queue.after == nil {
 				return
 			}
+			ctx = context.WithValue(ctx, aliyunMnsHandleErr, err)
 			queue.after(ctx)
 		}()
-		errChan <- queue.Handle(ctx)
+		errChan <- err
 	}()
 
 	select {
