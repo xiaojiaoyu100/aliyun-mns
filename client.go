@@ -60,8 +60,8 @@ func (c *Client) AddLogHook(f func(entry Entry) error) {
 	c.logger = c.logger.WithOptions(Hooks(f))
 }
 
-// SetMakeContext 设置环境
-func (c *Client) SetMakeContext(before Before) {
+// SetBefore 设置环境
+func (c *Client) SetBefore(before Before) {
 	c.before = before
 }
 
@@ -91,8 +91,8 @@ func (c *Client) SetQueuePrefix(prefix string) {
 	c.config.QueuePrefix = prefix
 }
 
-// SetClean 消息队里善后处理函数
-func (c *Client) SetClean(after After) {
+// SetAfter 消息队里善后处理函数
+func (c *Client) SetAfter(after After) {
 	c.after = after
 }
 
