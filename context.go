@@ -7,9 +7,10 @@ import (
 type contextKey int
 
 const (
-	aliyunMnsM          contextKey = 1
-	aliyunMnsContextErr contextKey = 2
-	aliyunMnsHandleErr  contextKey = 3
+	_ contextKey = iota
+	aliyunMnsM
+	aliyunMnsContextErr
+	aliyunMnsHandleErr
 )
 
 // Before 生成一个context
