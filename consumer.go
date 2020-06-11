@@ -370,7 +370,9 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 					queue.Stop()
 					fallthrough
 				default:
-					c.logger.Warn("BatchReceiveMessage", zap.Error(err))
+					c.logger.Warn("BatchReceiveMessage",
+						zap.Error(err),
+						zap.String("queue", queue.Name))
 					continue
 				}
 
