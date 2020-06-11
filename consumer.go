@@ -180,10 +180,10 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 					_, err := c.CreateQueue(queue.Name, queue.AttributeSetters...)
 					return err
 				})
-				switch err {
-				case nil:
-				case createQueueConflictError, unknownError:
-					c.logger.Warn("CreateQueue", zap.Error(err))
+				if err != nil && !lockguard.IsLockNotObtained(err) {
+					c.logger.Warn("CreateQueue",
+						zap.Error(err),
+						zap.String("queue", queue.Name))
 				}
 			}
 			createQueueReady <- struct{}{}
