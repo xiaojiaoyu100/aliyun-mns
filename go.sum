@@ -78,8 +78,8 @@ github.com/vmihailenco/msgpack v4.0.4+incompatible h1:dSLoQfGFAo3F6OoNhwUmLwVgaU
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/xiaojiaoyu100/cast v1.3.0 h1:XoMMGSKB/jdfQ8Y83p3rf3lQjdDV5Ai1bdXP+pXbjr0=
 github.com/xiaojiaoyu100/cast v1.3.0/go.mod h1:smc6oedQStn3NkaLOySSku1MDWcZHKA+hZDijVyyNcs=
-github.com/xiaojiaoyu100/curlew v0.2.3 h1:i3S6MU3TEsR77vN34zDTYHuhGHXg7i/yDBXL0mkamGY=
-github.com/xiaojiaoyu100/curlew v0.2.3/go.mod h1:T1E4wpTXciXHO0YJPhHz8sQB/MGPLt+M7efYFKK36Hg=
+github.com/xiaojiaoyu100/curlew v0.2.5 h1:bYtG7wqlWOM5pead5XV/Fc6XXHb6CIP+7b2YTM3r3gk=
+github.com/xiaojiaoyu100/curlew v0.2.5/go.mod h1:9lS3MbL/FL/8JFS13H0nOP4CyA5pu/6WYHov4tkgyoY=
 github.com/xiaojiaoyu100/lizard v0.1.3 h1:HWYX7vdWJCmQ+iFIzjbMW3lnILCjVV+n9SlFgTF1r4k=
 github.com/xiaojiaoyu100/lizard v0.1.3/go.mod h1:b3y3KbOWO1k7QkHiEveBifms5+RzlFcecFtUo6XcFYU=
 go.uber.org/atomic v1.6.0 h1:Ezj3JGmsOnG1MoRWQkPBsKLe9DwWD9QeXzTRzzldNVk=

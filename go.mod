@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/xiaojiaoyu100/cast v1.3.0
-	github.com/xiaojiaoyu100/curlew v0.2.3
+	github.com/xiaojiaoyu100/curlew v0.2.5
 	github.com/xiaojiaoyu100/lizard v0.1.3
 	go.uber.org/multierr v1.5.0
 	go.uber.org/zap v1.15.0
