@@ -81,7 +81,7 @@ start:
 			case internalError.Error():
 				retryIdx = append(retryIdx, idx)
 			default:
-				c.logger.Error("批量发送消息部分失败", zap.Error(err), zap.String("body", string(body)))
+				c.logger.Warn(fmt.Sprintf("fail to call BatchSendMessage for %s", name), zap.Error(err), zap.String("body", string(body)))
 			}
 		}
 		if len(retryIdx) == 0 {

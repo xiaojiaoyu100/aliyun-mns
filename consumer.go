@@ -172,7 +172,7 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 
 				guard, err := lockguard.New(c.config.Cmdable, fmt.Sprintf("alimns:create:queue:%s", s))
 				if err != nil {
-					c.logger.Warn("generate lock", zap.Error(err))
+					c.logger.Warn(fmt.Sprintf("fail to generate lock for %s", queue.Name), zap.Error(err))
 					continue
 				}
 
@@ -181,9 +181,7 @@ func (c *Consumer) CreateQueueList(fetchQueueReady chan struct{}) chan struct{} 
 					return err
 				})
 				if err != nil && !lockguard.IsLockNotObtained(err) {
-					c.logger.Warn("CreateQueue",
-						zap.Error(err),
-						zap.String("queue", queue.Name))
+					c.logger.Warn(fmt.Sprintf("fail to call CreateQueue for %s", queue.Name), zap.Error(err))
 				}
 			}
 			createQueueReady <- struct{}{}
@@ -291,19 +289,19 @@ func (c *Consumer) retrySendMessage() {
 
 			err = msgpack.Unmarshal([]byte(value), w)
 			if err != nil {
-				c.logger.Error(fmt.Sprintf("msgpack.Unmarshal: %s", value), zap.Error(err))
+				c.logger.Warn(fmt.Sprintf("msgpack.Unmarshal: %s", value), zap.Error(err))
 				continue
 			}
 
 			_, err = c.send(w.QueueName, w.Message)
 			if err != nil {
-				c.logger.Error(fmt.Sprintf("send: %s, %v", w.QueueName, w.Message), zap.Error(err))
+				c.logger.Warn(fmt.Sprintf("send: %s, %v", w.QueueName, w.Message), zap.Error(err))
 				continue
 			}
 
 			_, err = c.config.LRem(aliyunMnsProcessingQueue, 1, value).Result()
 			if err != nil {
-				c.logger.Error("LRem", zap.Error(err))
+				c.logger.Warn("LRem", zap.Error(err))
 			}
 		}
 	}()
@@ -370,9 +368,7 @@ func (c *Consumer) LongPollQueueMessage(queue *Queue) {
 					queue.Stop()
 					fallthrough
 				default:
-					c.logger.Warn("BatchReceiveMessage",
-						zap.Error(err),
-						zap.String("queue", queue.Name))
+					c.logger.Warn(fmt.Sprintf("fail to call BatchReceiveMessage for %s", queue.Name), zap.Error(err))
 					continue
 				}
 
@@ -401,9 +397,9 @@ func (c *Consumer) periodicallyChangeVisibility(queue *Queue, receiveMsg *Receiv
 					ticker.Stop()
 					return
 				default:
-					c.logger.Error("ChangeVisibilityTimeout",
+					c.logger.Warn(
+						fmt.Sprintf("fail to call ChangeVisibilityTimeout for %s", queue.Name),
 						zap.Error(err),
-						zap.String("queue", queue.Name),
 						zap.String("body", receiveMsg.MessageBody),
 						zap.String("message_id", receiveMsg.MessageID),
 						zap.String("receipt_handle", receiveMsg.ReceiptHandle),
@@ -429,12 +425,12 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		defer func() {
 			if p := recover(); p != nil {
 				e, _ := p.(error)
-				c.logger.Error("消息处理函数崩溃", zap.Error(e),
-					zap.String("queue", queue.Name),
+				c.logger.Warn(
+					fmt.Sprintf("handler crashed, queue = %s", queue.Name),
+					zap.Error(e),
 					zap.String("body", receiveMsg.MessageBody),
 					zap.String("message_id", receiveMsg.MessageID),
-					zap.String("receipt_handle", receiveMsg.ReceiptHandle),
-				)
+					zap.String("receipt_handle", receiveMsg.ReceiptHandle))
 				errChan <- handleCrashError
 			}
 		}()
@@ -443,19 +439,18 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		if IsBase64(receiveMsg.MessageBody) {
 			b64bytes, err := base64.StdEncoding.DecodeString(receiveMsg.MessageBody)
 			if err != nil {
-				c.logger.Error("尝试解析消息体失败(base64.StdEncoding)", zap.Error(err), zap.String("queue", queue.Name))
+				c.logger.Warn("尝试解析消息体失败(base64.StdEncoding)", zap.Error(err), zap.String("queue", queue.Name))
 			}
 			body = string(b64bytes)
 		} else {
 			body = receiveMsg.MessageBody
 		}
 		if receiveMsg.DequeueCount > dequeueCount {
-			c.logger.Error("The message is dequeued many times.",
-				zap.String("queue", queue.Name),
+			c.logger.Warn(
+				fmt.Sprintf("the message in %s is dequeued many times", queue.Name),
 				zap.String("message_id", receiveMsg.MessageID),
 				zap.String("receipt_handle", receiveMsg.ReceiptHandle),
-				zap.String("body", body),
-			)
+				zap.String("body", body))
 		}
 		m.QueueName = queue.Name
 		m.MessageBody = body
@@ -489,15 +484,16 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				if ok {
 					resp, err := c.ChangeVisibilityTimeout(queue.Name, receiveMsg.ReceiptHandle, b.Backoff())
 					if err != nil {
-						c.logger.Error("ChangeVisibilityTimeout",
-							zap.String("queue", queue.Name),
+						c.logger.Warn(
+							fmt.Sprintf("fail to call ChangeVisibilityTimeout for %s", queue.Name),
 							zap.Error(err),
 							zap.String("message_id", receiveMsg.MessageID),
 							zap.String("receipt_handle", receiveMsg.ReceiptHandle),
 							zap.String("body", receiveMsg.MessageBody),
 						)
 					} else {
-						c.logger.Debug(fmt.Sprintf("CurrentVisibleTime = %d, NextVisibleTime=%d", receiveMsg.NextVisibleTime, resp.NextVisibleTime),
+						c.logger.Debug(
+							fmt.Sprintf("CurrentVisibleTime = %d, NextVisibleTime=%d", receiveMsg.NextVisibleTime, resp.NextVisibleTime),
 							zap.String("queue", queue.Name),
 							zap.String("message_id", receiveMsg.MessageID),
 							zap.String("receipt_handle", receiveMsg.ReceiptHandle),
@@ -511,8 +507,8 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 		default:
 			err = c.DeleteMessage(queue.Name, receiveMsg.ReceiptHandle)
 			if err != nil {
-				c.logger.Error("DeleteMessage",
-					zap.String("queue", queue.Name),
+				c.logger.Warn(
+					fmt.Sprintf("fail to call DeleteMessage for %s", queue.Name),
 					zap.Error(err),
 					zap.String("message_id", receiveMsg.MessageID),
 					zap.String("receipt_handle", receiveMsg.ReceiptHandle),
@@ -538,7 +534,9 @@ func (c *Consumer) ConsumeQueueMessage(queue *Queue) {
 			case receiveMessage := <-queue.receiveMessageChan:
 				{
 					if receiveMessage.NextVisibleTime < TimestampInMs() {
-						c.logger.Warn("Messages are stacked.", zap.String("queue", queue.Name), zap.String("body", receiveMessage.MessageBody))
+						c.logger.Warn(
+							fmt.Sprintf("messages in %s are stacked", queue.Name),
+							zap.String("body", receiveMessage.MessageBody))
 						continue
 					}
 

@@ -77,13 +77,13 @@ func (c *Client) pushRetryQueue(name string, message Message) {
 
 	b, err := msgpack.Marshal(w)
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("msgpack.Marshal: %v", w), zap.Error(err))
+		c.logger.Warn(fmt.Sprintf("msgpack.Marshal: %v", w), zap.Error(err))
 		return
 	}
 
 	_, err = c.config.RPush(aliyunMnsRetryQueue, string(b)).Result()
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("RPush: %s", b), zap.Error(err))
+		c.logger.Warn(fmt.Sprintf("RPush: %s", b), zap.Error(err))
 		return
 	}
 }
