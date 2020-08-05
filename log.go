@@ -26,6 +26,7 @@ type Entry struct {
 // NewLogger 创建一个logger
 func NewLogger() (logger *zap.Logger, err error) {
 	conf := zap.NewProductionConfig()
+	conf.Sampling = nil
 	conf.EncoderConfig = newEncoderConfig()
 	logger, err = conf.Build()
 	return
