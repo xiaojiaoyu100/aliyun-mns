@@ -1,6 +1,7 @@
 # aliyun-mns
-
 [aliyun-mns](https://www.aliyun.com/product/mns/)是对阿里云消息服务的封装
+
+[![GoDoc](https://godoc.org/github.com/xiaojiaoyu100/aliyun-mns?status.svg)](https://godoc.org/github.com/xiaojiaoyu100/aliyun-mns)
 
 ## 队列模型
 
