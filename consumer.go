@@ -9,10 +9,13 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/xiaojiaoyu100/lizard/convert"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/vmihailenco/msgpack"
@@ -67,6 +70,8 @@ func (c *Consumer) BatchListQueue() error {
 	}
 
 	for {
+		time.Sleep(50 * time.Millisecond)
+
 		if resp.NextMarker == "" {
 			return nil
 		}
@@ -88,8 +93,6 @@ func (c *Consumer) BatchListQueue() error {
 				c.doneQueues[name] = struct{}{}
 			}
 		}
-
-		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -430,7 +433,9 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 					zap.Error(e),
 					zap.String("body", receiveMsg.MessageBody),
 					zap.String("message_id", receiveMsg.MessageID),
-					zap.String("receipt_handle", receiveMsg.ReceiptHandle))
+					zap.String("receipt_handle", receiveMsg.ReceiptHandle),
+					zap.String("stack_trace", convert.ByteToString(debug.Stack())),
+				)
 				errChan <- handleCrashError
 			}
 		}()

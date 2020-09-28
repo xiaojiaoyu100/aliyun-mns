@@ -12,9 +12,8 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/xiaojiaoyu100/cast v1.3.0
 	github.com/xiaojiaoyu100/curlew v0.2.5
-	github.com/xiaojiaoyu100/lizard v0.1.3
+	github.com/xiaojiaoyu100/lizard v0.6.2
 	go.uber.org/multierr v1.5.0
 	go.uber.org/zap v1.15.0
-	golang.org/x/sys v0.0.0-20191104094858-e8c54fb511f6 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 )
