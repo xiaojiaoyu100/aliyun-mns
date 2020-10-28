@@ -427,10 +427,22 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 	go func() {
 		defer func() {
 			if p := recover(); p != nil {
-				e, _ := p.(error)
+				var err error
+				switch pt := p.(type) {
+				case string:
+					{
+						err = errors.New(pt)
+					}
+				case error:
+					{
+						err = pt
+					}
+				default:
+					err = errors.New("unknown err")
+				}
 				c.logger.Warn(
 					fmt.Sprintf("handler crashed, queue = %s", queue.Name),
-					zap.Error(e),
+					zap.Error(err),
 					zap.String("body", receiveMsg.MessageBody),
 					zap.String("message_id", receiveMsg.MessageID),
 					zap.String("receipt_handle", receiveMsg.ReceiptHandle),
