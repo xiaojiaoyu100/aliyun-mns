@@ -470,6 +470,7 @@ func (c *Consumer) OnReceive(queue *Queue, receiveMsg *ReceiveMessage) {
 				zap.String("body", body))
 		}
 		m.QueueName = queue.Name
+		m.MessageID = receiveMsg.MessageID
 		m.MessageBody = body
 		m.EnqueueTime = receiveMsg.EnqueueTime
 		m.codec = queue.codec

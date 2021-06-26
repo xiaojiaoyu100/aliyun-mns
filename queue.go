@@ -10,6 +10,7 @@ import (
 // M 消息内容，去掉其它字段是为了不要依赖消息其它字段，应该依赖数据库字段
 type M struct {
 	QueueName     string // 队列名
+	MessageID     string // 消息ID， 建议不要依赖这个ID，可以找业务上的依赖ID
 	MessageBody   string // 消息体
 	EnqueueTime   int64  // 入队时间
 	ReceiptHandle string // 消息句柄
